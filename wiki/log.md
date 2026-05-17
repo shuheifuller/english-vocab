@@ -1,4 +1,10 @@
+---
+tags: [wiki, log]
+---
+
 # Activity Log
+
+→ [[_Overview]] | [[wiki/index]]
 
 > Append-only. Each line: `## [DATE] action | description`
 > Parse recent entries: `grep "^## " log.md | tail -10`

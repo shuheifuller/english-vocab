@@ -1,4 +1,10 @@
+---
+tags: [wiki, theme, idioms]
+---
+
 # イディオム・慣用句
+
+→ [[wiki/index]] | [[_Overview]]
 Last updated: 2026-05-17 | 44 words
 
 ## Words

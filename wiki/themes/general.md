@@ -1,4 +1,10 @@
+---
+tags: [wiki, theme, general]
+---
+
 # その他・一般
+
+→ [[wiki/index]] | [[_Overview]]
 Last updated: 2026-05-17 | 263 words
 
 ## Words

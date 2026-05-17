@@ -1,5 +1,26 @@
+---
+tags: [wiki, index, vocabulary]
+updated: 2026-05-17
+---
+
 # Vocabulary Index
-Last updated: 2026-05-17 | Total: 411 words
+
+→ [[_Overview]] | [[wiki/log]] | [[_Architecture]]
+
+Last updated: 2026-05-17 | Total: 412 words
+
+> Claudeの検索起点。まずここを読み、関連するテーマページへ掘り下げる。
+
+## テーマページ一覧
+- [[wiki/themes/business]] — ビジネス・職場表現
+- [[wiki/themes/idioms]] — イディオム・慣用句
+- [[wiki/themes/aussie-slang]] — オーストラリア英語
+- [[wiki/themes/medical]] — 医療・健康
+- [[wiki/themes/legal-political]] — 法律・政治
+- [[wiki/themes/social]] — 社会・人間関係
+- [[wiki/themes/similar-words]] — 混同しやすい単語
+
+---
 
 > This file is Claude's primary navigation tool. Search here first, then drill into theme pages.
 

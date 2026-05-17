@@ -1,4 +1,10 @@
+---
+tags: [wiki, theme, business]
+---
+
 # ビジネス・職場表現
+
+→ [[wiki/index]] | [[_Overview]]
 Last updated: 2026-05-17 | 33 words
 
 ## Words

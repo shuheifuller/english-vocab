@@ -1,4 +1,10 @@
+---
+tags: [wiki, theme, medical]
+---
+
 # 医療・健康
+
+→ [[wiki/index]] | [[_Overview]]
 Last updated: 2026-05-17 | 22 words
 
 ## Words

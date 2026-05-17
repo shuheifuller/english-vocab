@@ -1,4 +1,10 @@
+---
+tags: [schema, claude, ai-instructions]
+---
+
 # English Vocabulary Wiki — Schema
+
+→ [[_Overview]] | [[_Architecture]] | [[_How_to_Use]]
 
 ## About This Project
 

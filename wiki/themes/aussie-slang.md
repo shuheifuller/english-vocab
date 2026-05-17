@@ -1,4 +1,10 @@
+---
+tags: [wiki, theme, aussie-slang]
+---
+
 # オーストラリア英語スラング
+
+→ [[wiki/index]] | [[_Overview]]
 Last updated: 2026-05-17 | 7 words
 
 ## Words

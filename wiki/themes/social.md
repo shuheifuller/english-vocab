@@ -1,4 +1,10 @@
+---
+tags: [wiki, theme, social]
+---
+
 # 社会・人間関係
+
+→ [[wiki/index]] | [[_Overview]]
 Last updated: 2026-05-17 | 28 words
 
 ## Words

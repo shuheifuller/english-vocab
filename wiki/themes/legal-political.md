@@ -1,4 +1,10 @@
+---
+tags: [wiki, theme, legal-political]
+---
+
 # 法律・政治
+
+→ [[wiki/index]] | [[_Overview]]
 Last updated: 2026-05-17 | 26 words
 
 ## Words

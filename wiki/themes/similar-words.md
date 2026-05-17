@@ -1,4 +1,10 @@
+---
+tags: [wiki, theme, similar-words]
+---
+
 # Similar & Easily Confused Words
+
+→ [[wiki/index]] | [[_Overview]]
 Last updated: 2026-05-17
 
 > Cross-references between words that are close in meaning but differ in nuance, formality, or context.
