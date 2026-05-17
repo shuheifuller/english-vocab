@@ -1,0 +1,894 @@
+#!/usr/bin/env python3
+"""Generate vocab.html (PWA) from vocab_data.json. Run after any data update."""
+
+import json, os
+
+SCRIPT_DIR  = os.path.dirname(os.path.abspath(__file__))
+VOCAB_JSON  = os.path.join(SCRIPT_DIR, "vocab_data.json")
+CONFIG_JSON = os.path.join(SCRIPT_DIR, "config.json")
+OUTPUT_HTML = os.path.join(SCRIPT_DIR, "vocab.html")
+DEFAULT_PIN = "1234"
+
+def get_config():
+    try:
+        with open(CONFIG_JSON) as f: return json.load(f)
+    except: return {}
+
+def generate(vocab, cfg):
+    vj      = json.dumps(vocab, ensure_ascii=False)
+    total   = len(vocab)
+    years   = sorted({v.get("year",2020) for v in vocab}, reverse=True)
+    yrs_js  = json.dumps(years)
+    pin     = str(cfg.get("pin", DEFAULT_PIN))
+    gcid    = cfg.get("google_client_id","")
+    gemail  = cfg.get("authorized_email","")
+
+    return f"""<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0f0f1a">
+<title>英語単語帳</title>
+<link rel="manifest" href="manifest.json">
+<style>
+*,*::before,*::after{{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}}
+:root{{
+  --bg:#0f0f1a;--sf:#1a1a2e;--sf2:#16213e;--sf3:#0d1b38;
+  --ac:#e94560;--tx:#eaeaea;--tx2:#8892b0;--bd:#2a2a4a;
+  --gn:#4ade80;--yw:#fbbf24;--pu:#a78bfa;--bl:#60a5fa;
+  --r:16px;--st:env(safe-area-inset-top);--sb:env(safe-area-inset-bottom);
+}}
+@media(prefers-color-scheme:light){{
+  :root{{--bg:#f0f2f8;--sf:#fff;--sf2:#e8ebf5;--sf3:#dce4f5;
+        --tx:#1a1a2e;--tx2:#5a6080;--bd:#d0d5e8;}}
+}}
+html,body{{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--tx)}}
+#app{{display:flex;flex-direction:column;height:100%;padding-top:var(--st)}}
+/* ─── LOCK ─────────────────────────────────── */
+#lock{{position:fixed;inset:0;background:var(--bg);z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:40px 24px}}
+.lock-logo{{font-size:52px;line-height:1}}
+.lock-title{{font-size:24px;font-weight:800;letter-spacing:-.5px;text-align:center}}
+.lock-sub{{font-size:13px;color:var(--tx2);text-align:center;max-width:280px}}
+#google-btn-wrap{{width:100%;max-width:280px;display:flex;flex-direction:column;align-items:center;gap:10px}}
+.g-btn{{display:flex;align-items:center;gap:10px;background:#fff;color:#3c4043;border:1px solid #dadce0;border-radius:24px;padding:10px 20px;font-size:14px;font-weight:500;cursor:pointer;width:100%;justify-content:center;transition:box-shadow .2s}}
+.g-btn:hover{{box-shadow:0 2px 8px rgba(0,0,0,.15)}}
+.g-btn svg{{flex-shrink:0}}
+.lock-sep{{display:flex;align-items:center;gap:10px;color:var(--tx2);font-size:12px;width:100%;max-width:280px}}
+.lock-sep::before,.lock-sep::after{{content:'';flex:1;height:1px;background:var(--bd)}}
+#pin-section{{display:flex;flex-direction:column;align-items:center;gap:16px;width:100%;max-width:280px}}
+.pin-dots{{display:flex;gap:12px}}
+.pin-dot{{width:12px;height:12px;border-radius:50%;border:2px solid var(--tx2);transition:all .15s}}
+.pin-dot.f{{background:var(--ac);border-color:var(--ac)}}
+.pin-grid{{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;width:100%}}
+.pb{{background:var(--sf);border:1px solid var(--bd);border-radius:12px;padding:16px;font-size:22px;font-weight:700;color:var(--tx);cursor:pointer;font-family:inherit;transition:all .1s}}
+.pb:active{{background:var(--sf2);transform:scale(.95)}}
+.lock-err{{color:var(--ac);font-size:12px;min-height:18px;text-align:center}}
+/* ─── NAV ──────────────────────────────────── */
+#nav{{display:flex;background:var(--sf);border-top:1px solid var(--bd);padding-bottom:var(--sb);flex-shrink:0;order:2}}
+.nb{{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 2px 8px;border:none;background:none;color:var(--tx2);font-size:9px;cursor:pointer;transition:color .2s;position:relative;font-family:inherit}}
+.nb.active{{color:var(--ac)}}
+.nb svg{{width:22px;height:22px;flex-shrink:0}}
+.badge{{position:absolute;top:6px;right:calc(50% - 18px);background:var(--ac);color:#fff;font-size:9px;font-weight:800;padding:1px 5px;border-radius:10px;display:none}}
+/* ─── VIEWS ─────────────────────────────────── */
+#content{{flex:1;overflow:hidden;position:relative;order:1}}
+.view{{position:absolute;inset:0;overflow-y:auto;display:none;flex-direction:column}}
+.view.active{{display:flex}}
+.vh{{padding:14px 16px 10px;display:flex;align-items:flex-start;justify-content:space-between;flex-shrink:0;gap:10px}}
+.vtitle{{font-size:18px;font-weight:800}}
+.vsub{{font-size:11px;color:var(--tx2);margin-top:2px}}
+/* ─── FILTER CHIPS ──────────────────────────── */
+.fbar{{display:flex;gap:6px;padding:0 16px 8px;overflow-x:auto;flex-shrink:0;-webkit-overflow-scrolling:touch}}
+.fbar::-webkit-scrollbar{{display:none}}
+.chip{{padding:6px 14px;border-radius:20px;border:1px solid var(--bd);background:none;color:var(--tx2);font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:inherit;transition:all .15s;flex-shrink:0}}
+.chip.active{{background:var(--ac);color:#fff;border-color:var(--ac)}}
+.chip.pn.active{{background:#3b82f6;border-color:#3b82f6}}
+.chip.pv.active{{background:#22c55e;border-color:#22c55e}}
+.chip.ppv.active{{background:#10b981;border-color:#10b981}}
+.chip.pa.active{{background:#f97316;border-color:#f97316}}
+.chip.pad.active{{background:#a855f7;border-color:#a855f7}}
+.chip.pe.active{{background:#e94560;border-color:#e94560}}
+.chip.pab.active{{background:#6b7280;border-color:#6b7280}}
+/* ─── REVIEW ────────────────────────────────── */
+#vr{{align-items:center;justify-content:center;gap:0;padding:14px 16px 10px}}
+.pw{{width:100%;max-width:400px;margin-bottom:12px;flex-shrink:0}}
+.pb2{{height:4px;background:var(--bd);border-radius:2px;overflow:hidden}}
+.pf{{height:100%;background:var(--ac);transition:width .3s}}
+.pl{{display:flex;justify-content:space-between;font-size:11px;color:var(--tx2);margin-top:5px}}
+.cw{{flex:1;width:100%;max-width:400px;perspective:1000px;cursor:pointer;min-height:0}}
+.card{{width:100%;height:100%;position:relative;transform-style:preserve-3d;transition:transform .45s cubic-bezier(.4,0,.2,1)}}
+.card.flip{{transform:rotateY(180deg)}}
+.cf{{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;background:var(--sf);border-radius:var(--r);padding:24px 20px;display:flex;flex-direction:column;border:1px solid var(--bd);box-shadow:0 8px 32px rgba(0,0,0,.2)}}
+.cb{{transform:rotateY(180deg)}}
+.clbl{{font-size:10px;color:var(--tx2);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;font-weight:700}}
+.cword{{font-size:clamp(20px,5vw,30px);font-weight:800;line-height:1.2;flex:1;display:flex;align-items:center}}
+.chint{{font-size:12px;color:var(--tx2);text-align:center;margin-top:auto}}
+.cb .clbl{{color:var(--ac)}}
+.cmeta{{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}}
+.ctag{{font-size:10px;padding:2px 8px;border-radius:10px;font-weight:700;background:var(--sf2);color:var(--tx2)}}
+.cmja{{font-size:clamp(15px,3.5vw,19px);font-weight:700;margin-bottom:10px;line-height:1.4}}
+.cmen{{font-size:12px;color:var(--tx2);margin-bottom:12px;line-height:1.6;font-style:italic}}
+.cex{{background:var(--sf2);border-radius:10px;padding:10px 12px;margin-bottom:auto}}
+.cexl{{font-size:9px;color:var(--ac);text-transform:uppercase;letter-spacing:1px;margin-bottom:5px;font-weight:800}}
+.cext{{font-size:12px;line-height:1.6}}
+.cnote{{font-size:11px;color:var(--tx2);margin-top:6px;line-height:1.5;font-style:italic}}
+.ca{{display:flex;gap:8px;width:100%;max-width:400px;flex-shrink:0;margin-top:10px}}
+.ab{{flex:1;padding:12px 8px;border-radius:12px;border:none;font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;font-family:inherit}}
+.again{{background:rgba(233,69,96,.15);color:var(--ac)}}
+.good{{background:rgba(74,222,128,.15);color:var(--gn)}}
+.again:active{{background:rgba(233,69,96,.3)}}
+.good:active{{background:rgba(74,222,128,.3)}}
+.arr{{display:flex;gap:10px;width:100%;max-width:400px;justify-content:center;margin-top:6px;flex-shrink:0}}
+.arb{{background:var(--sf2);border:1px solid var(--bd);color:var(--tx2);width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px}}
+.arb:active{{background:var(--bd)}}
+.sh{{font-size:10px;color:var(--tx2);text-align:center;margin-top:4px;flex-shrink:0}}
+/* ─── QUIZ ──────────────────────────────────── */
+.qqn{{font-size:12px;color:var(--tx2);padding:12px 16px 0;flex-shrink:0}}
+.qq{{font-size:clamp(20px,5vw,28px);font-weight:800;padding:16px;line-height:1.3}}
+.qcs{{display:flex;flex-direction:column;gap:10px;padding:0 16px}}
+.qc{{background:var(--sf);border:2px solid var(--bd);border-radius:12px;padding:14px;font-size:14px;text-align:left;cursor:pointer;color:var(--tx);font-family:inherit;line-height:1.4;width:100%}}
+.qc.correct{{border-color:var(--gn);background:rgba(74,222,128,.1)}}
+.qc.wrong{{border-color:var(--ac);background:rgba(233,69,96,.1)}}
+.qc:disabled{{cursor:default}}
+.qnext{{margin:16px;background:var(--ac);color:#fff;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;width:calc(100%-32px);cursor:pointer;font-family:inherit;display:none;width:calc(100% - 32px)}}
+.qr{{text-align:center;padding:40px 20px}}
+.qsc{{font-size:56px;font-weight:900;color:var(--ac)}}
+.qsl{{font-size:15px;color:var(--tx2);margin-top:6px}}
+.qrst{{margin-top:24px;background:var(--ac);color:#fff;border:none;border-radius:12px;padding:14px 32px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit}}
+/* ─── WORDS ─────────────────────────────────── */
+#vw .vh{{flex-direction:column;align-items:stretch;gap:8px}}
+.srow{{display:flex;gap:8px;align-items:center}}
+.sbox{{flex:1;background:var(--sf);border:1px solid var(--bd);border-radius:10px;padding:10px 14px;font-size:15px;color:var(--tx);font-family:inherit;outline:none}}
+.sbox::placeholder{{color:var(--tx2)}}
+.sbtn{{background:var(--sf);border:1px solid var(--bd);border-radius:10px;padding:10px 12px;font-size:12px;color:var(--tx2);cursor:pointer;font-family:inherit;white-space:nowrap}}
+.wl{{flex:1;overflow-y:auto;padding:0 16px 8px}}
+.wi{{background:var(--sf);border-radius:12px;padding:12px 14px;margin-bottom:8px;border:1px solid var(--bd)}}
+.wit{{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}}
+.wiw{{font-size:15px;font-weight:700;flex:1;line-height:1.3}}
+.wib{{display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0}}
+.mb{{font-size:9px;padding:2px 7px;border-radius:10px;font-weight:700}}
+.db{{font-size:9px;color:var(--tx2);font-weight:600}}
+.mn{{background:rgba(167,139,250,.15);color:var(--pu)}}
+.ml{{background:rgba(251,191,36,.15);color:var(--yw)}}
+.mm{{background:rgba(74,222,128,.15);color:var(--gn)}}
+.wim{{font-size:12px;color:var(--tx2);margin-top:5px;line-height:1.5}}
+.wie{{font-size:11px;color:var(--tx2);margin-top:3px;font-style:italic;line-height:1.4}}
+.ptag{{display:inline-block;font-size:9px;padding:2px 7px;border-radius:6px;font-weight:700;margin-top:4px;background:var(--sf2);color:var(--tx2)}}
+/* ─── ADD ───────────────────────────────────── */
+#va{{padding-bottom:20px}}
+.fsec{{padding:0 16px 14px}}
+.flbl{{font-size:12px;color:var(--tx2);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;font-weight:700;display:block}}
+.fi{{width:100%;background:var(--sf);border:1px solid var(--bd);border-radius:10px;padding:12px 14px;font-size:15px;color:var(--tx);font-family:inherit;outline:none;transition:border-color .2s}}
+.fi:focus{{border-color:var(--ac)}}
+.fi::placeholder{{color:var(--tx2)}}
+textarea.fi{{min-height:80px;resize:vertical;line-height:1.5}}
+.subbtn{{width:100%;background:var(--ac);color:#fff;border:none;border-radius:12px;padding:16px;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit}}
+.subbtn:active{{opacity:.8}}
+.psec{{background:var(--sf);border-radius:12px;border:1px solid var(--bd);overflow:hidden}}
+.pi{{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--bd);gap:8px}}
+.pi:last-child{{border-bottom:none}}
+.piw{{font-size:14px;font-weight:700}}
+.pdel{{background:none;border:none;color:var(--ac);cursor:pointer;font-size:16px;padding:4px}}
+.expbtn{{width:100%;background:var(--sf2);color:var(--tx);border:1px solid var(--bd);border-radius:12px;padding:14px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit}}
+.empty{{text-align:center;padding:28px;color:var(--tx2);font-size:14px}}
+.divider{{height:1px;background:var(--bd);margin:0 16px 16px}}
+/* ─── STATS ─────────────────────────────────── */
+#vst{{padding-bottom:40px}}
+.ssec{{padding:0 16px 20px}}
+.stitle{{font-size:11px;color:var(--tx2);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;font-weight:700}}
+/* Guide */
+.guide-card{{background:var(--sf);border-radius:14px;border:1px solid var(--bd);overflow:hidden}}
+.guide-item{{display:flex;gap:14px;padding:14px 16px;border-bottom:1px solid var(--bd);align-items:flex-start}}
+.guide-item:last-child{{border-bottom:none}}
+.guide-icon{{font-size:24px;flex-shrink:0;margin-top:2px}}
+.guide-title{{font-size:14px;font-weight:700;margin-bottom:4px}}
+.guide-body{{font-size:12px;color:var(--tx2);line-height:1.6}}
+.guide-code{{font-family:monospace;background:var(--sf2);border-radius:6px;padding:2px 6px;font-size:11px;color:var(--ac)}}
+/* Trend chart */
+.chart-scroll{{overflow-x:auto;-webkit-overflow-scrolling:touch}}
+.chart-scroll::-webkit-scrollbar{{display:none}}
+#trend-svg{{display:block}}
+/* Mastery donut */
+.donut-wrap{{display:flex;align-items:center;gap:20px;padding:4px 0 16px}}
+.donut-svg{{flex-shrink:0}}
+.donut-legend{{display:flex;flex-direction:column;gap:8px;flex:1}}
+.dl{{display:flex;align-items:center;gap:8px;font-size:13px}}
+.dldot{{width:10px;height:10px;border-radius:50%;flex-shrink:0}}
+.dlnum{{font-weight:700;margin-left:auto}}
+/* Year mastery table */
+.yt{{width:100%;border-collapse:collapse;font-size:12px}}
+.yt th{{text-align:left;color:var(--tx2);font-weight:600;padding:6px 8px 10px;font-size:11px;border-bottom:1px solid var(--bd)}}
+.yt td{{padding:8px;border-bottom:1px solid var(--bd);vertical-align:middle}}
+.yt tr:last-child td{{border-bottom:none}}
+.yt .yn{{font-weight:700}}
+.prog-seg{{height:8px;border-radius:4px;overflow:hidden;background:var(--bd);display:flex;margin-top:4px}}
+.seg-m{{background:var(--gn)}}
+.seg-l{{background:var(--yw)}}
+.seg-n{{background:var(--pu)}}
+.pct{{color:var(--tx2);font-size:11px}}
+/* Settings card */
+.sc{{background:var(--sf);border-radius:12px;overflow:hidden;border:1px solid var(--bd)}}
+.sr{{display:flex;align-items:center;padding:13px 16px;border-bottom:1px solid var(--bd);gap:10px;cursor:pointer}}
+.sr:last-child{{border-bottom:none}}
+.srt{{flex:1}}
+.srl{{font-size:14px;font-weight:500}}
+.srs{{font-size:11px;color:var(--tx2);margin-top:2px}}
+.srv{{font-size:13px;color:var(--ac);font-weight:700;flex-shrink:0}}
+.sbtn2{{background:var(--ac);color:#fff;border:none;border-radius:8px;padding:7px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit}}
+.ssel{{background:var(--sf2);color:var(--tx);border:1px solid var(--bd);border-radius:8px;padding:7px 10px;font-size:13px;font-family:inherit;outline:none}}
+/* User badge */
+.user-badge{{background:var(--sf);border:1px solid var(--bd);border-radius:24px;padding:6px 14px 6px 8px;display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600}}
+.user-av{{width:28px;height:28px;border-radius:50%;background:var(--ac);display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;font-weight:800;flex-shrink:0}}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ LOCK ═══════════════════════ -->
+<div id="lock">
+  <div class="lock-logo">📚</div>
+  <div class="lock-title">英語単語帳</div>
+  <div class="lock-sub">Shuheiの個人英語学習帳</div>
+
+  <!-- Google SSO (shows when client_id configured) -->
+  <div id="google-btn-wrap" style="display:none;flex-direction:column;align-items:center;gap:12px;width:100%;max-width:280px">
+    <button class="g-btn" id="g-signin-btn" onclick="startGoogleSignIn()">
+      <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z"/></svg>
+      Googleアカウントでログイン
+    </button>
+    <div id="g-one-tap"></div>
+  </div>
+
+  <!-- Separator (shows when both modes available) -->
+  <div class="lock-sep" id="lock-sep" style="display:none">または</div>
+
+  <!-- PIN fallback -->
+  <div id="pin-section">
+    <div class="pin-dots">
+      <div class="pin-dot" id="d0"></div><div class="pin-dot" id="d1"></div>
+      <div class="pin-dot" id="d2"></div><div class="pin-dot" id="d3"></div>
+    </div>
+    <div class="lock-err" id="lock-err"></div>
+    <div class="pin-grid">
+      {''.join(f'<button class="pb" onclick="pinKey({i})">{i}</button>' for i in [1,2,3,4,5,6,7,8,9])}
+      <button class="pb" onclick="pinKey(null)" style="font-size:18px">⌫</button>
+      <button class="pb" onclick="pinKey(0)">0</button>
+      <button class="pb" style="visibility:hidden"></button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ APP ════════════════════════ -->
+<div id="app" style="display:none">
+<div id="content">
+
+<!-- REVIEW -->
+<div id="vr" class="view active">
+  <div class="pw">
+    <div class="pb2"><div class="pf" id="pf" style="width:0%"></div></div>
+    <div class="pl"><span id="pt">{total}件</span><span id="pfl">全て</span></div>
+  </div>
+  <div class="cw" id="cw">
+    <div class="card" id="card">
+      <div class="cf">
+        <div class="clbl">英語</div>
+        <div class="cword" id="cword">-</div>
+        <div class="chint">タップでめくる</div>
+      </div>
+      <div class="cf cb">
+        <div class="clbl">意味</div>
+        <div class="cmeta" id="cmeta"></div>
+        <div class="cmja" id="cmja"></div>
+        <div class="cmen" id="cmen"></div>
+        <div class="cex" id="cex">
+          <div class="cexl">例文</div>
+          <div class="cext" id="cext"></div>
+          <div class="cnote" id="cnote"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="ca" id="ca" style="display:none">
+    <button class="ab again" onclick="mark(false)">もう一度 ↺</button>
+    <button class="ab good" onclick="mark(true)">わかった！ ✓</button>
+  </div>
+  <div class="arr">
+    <button class="arb" onclick="nav(-1)">←</button>
+    <button class="arb" onclick="nav(1)">→</button>
+  </div>
+  <div class="sh">← 前 / 次 →　タップでめくる</div>
+</div>
+
+<!-- QUIZ -->
+<div id="vq" class="view">
+  <div class="qqn" id="qqn">問題 1/10</div>
+  <div class="qq" id="qq"></div>
+  <div class="qcs" id="qcs"></div>
+  <button class="qnext" id="qnext" onclick="nxtQ()">次の問題 →</button>
+  <div class="qr" id="qr" style="display:none">
+    <div class="qsc" id="qsc"></div>
+    <div class="qsl">正解率</div>
+    <button class="qrst" onclick="startQ()">もう一度</button>
+  </div>
+</div>
+
+<!-- WORDS -->
+<div id="vw" class="view">
+  <div class="vh">
+    <div><div class="vtitle">単語一覧</div><div class="vsub" id="wcount">{total}件</div></div>
+    <div class="srow" style="width:100%">
+      <input class="sbox" placeholder="検索…" oninput="setSrch(this.value)">
+      <button class="sbtn" onclick="togSort()" id="sortbtn">新→旧</button>
+    </div>
+  </div>
+  <div class="fbar" id="ybar">
+    <button class="chip active" onclick="setY('all',this)">全年</button>
+    {''.join(f'<button class="chip" onclick="setY({y},this)">{y}</button>' for y in years)}
+  </div>
+  <div class="fbar" id="pbar">
+    <button class="chip active" onclick="setP('all',this)">全品詞</button>
+    <button class="chip pn" onclick="setP('noun',this)">名詞</button>
+    <button class="chip pv" onclick="setP('verb',this)">動詞</button>
+    <button class="chip ppv" onclick="setP('phrasal_verb',this)">句動詞</button>
+    <button class="chip pa" onclick="setP('adjective',this)">形容詞</button>
+    <button class="chip pad" onclick="setP('adverb',this)">副詞</button>
+    <button class="chip pe" onclick="setP('expression',this)">表現</button>
+    <button class="chip pab" onclick="setP('abbreviation',this)">略語</button>
+  </div>
+  <div class="fbar">
+    <button class="chip active" onclick="setM('all',this)">全習熟度</button>
+    <button class="chip" onclick="setM('new',this)">未学習</button>
+    <button class="chip" onclick="setM('learning',this)">学習中</button>
+    <button class="chip" onclick="setM('mastered',this)">習得済み</button>
+  </div>
+  <div class="wl" id="wl"></div>
+</div>
+
+<!-- ADD -->
+<div id="va" class="view">
+  <div class="vh"><div><div class="vtitle">単語を追加</div><div class="vsub">意味・品詞は自動検索されます</div></div></div>
+  <div class="fsec">
+    <label class="flbl">単語 / 表現 *</label>
+    <input class="fi" id="aw" placeholder="例: reconcile, in a nutshell" autocorrect="off" autocapitalize="none">
+  </div>
+  <div class="fsec">
+    <label class="flbl">メモ（任意）</label>
+    <textarea class="fi" id="an" placeholder="どこで出会った？気になった点など…"></textarea>
+  </div>
+  <div class="fsec"><button class="subbtn" onclick="addW()">キューに追加 →</button></div>
+  <div class="divider"></div>
+  <div class="fsec">
+    <div class="stitle">追加待ちキュー（<span id="qcnt">0</span>件）</div>
+    <div id="qempty" class="empty" style="display:none">追加待ちの単語はありません</div>
+    <div class="psec" id="plist"></div>
+  </div>
+  <div class="fsec" id="expwrap" style="display:none">
+    <button class="expbtn" onclick="expQ()">📥 queue.json をダウンロード<br><small style="font-weight:400;opacity:.7">raw/queue.json を置き換えて python3 sync.py を実行してください</small></button>
+  </div>
+</div>
+
+<!-- STATS -->
+<div id="vst" class="view">
+  <div class="vh">
+    <div><div class="vtitle">統計・設定</div></div>
+    <div id="user-badge-wrap"></div>
+  </div>
+
+  <!-- Usage Guide -->
+  <div class="ssec">
+    <div class="stitle">📖 使い方</div>
+    <div class="guide-card">
+      <div class="guide-item">
+        <div class="guide-icon">💬</div>
+        <div>
+          <div class="guide-title">Claudeに話しかけて単語を追加</div>
+          <div class="guide-body">Claude Code で <span class="guide-code">「reconcileをvocabに追加して」</span> と話しかけるだけ。辞書検索・品詞判定・日本語訳・例文が自動で登録され、このページも更新されます。</div>
+        </div>
+      </div>
+      <div class="guide-item">
+        <div class="guide-icon">📱</div>
+        <div>
+          <div class="guide-title">オフラインで単語をキューに追加</div>
+          <div class="guide-body">「追加」タブで単語を入力 → キューに保存。PCに戻ったら <span class="guide-code">queue.json をダウンロード</span> して <span class="guide-code">raw/</span> に置き、<span class="guide-code">python3 sync.py</span> を実行してください。</div>
+        </div>
+      </div>
+      <div class="guide-item">
+        <div class="guide-icon">🃏</div>
+        <div>
+          <div class="guide-title">フラッシュカードで復習</div>
+          <div class="guide-body">タップでカードをめくる。スワイプ左右で次/前の単語。「わかった！」でLearning→Masteredに昇格。</div>
+        </div>
+      </div>
+      <div class="guide-item">
+        <div class="guide-icon">🧩</div>
+        <div>
+          <div class="guide-title">クイズで確認</div>
+          <div class="guide-body">4択クイズで記憶を定着。設定から出題数（10〜50問）を変更できます。</div>
+        </div>
+      </div>
+      <div class="guide-item">
+        <div class="guide-icon">🔍</div>
+        <div>
+          <div class="guide-title">単語帳で検索・フィルター</div>
+          <div class="guide-body">年・品詞（名詞/動詞/句動詞/形容詞/副詞/表現/略語）・習熟度で絞り込みができます。</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Trend Chart -->
+  <div class="ssec">
+    <div class="stitle">📈 単語追加トレンド（年別）</div>
+    <div class="chart-scroll">
+      <svg id="trend-svg" height="180"></svg>
+    </div>
+  </div>
+
+  <!-- Mastery Donut -->
+  <div class="ssec">
+    <div class="stitle">📊 現在の習熟度</div>
+    <div class="donut-wrap">
+      <svg class="donut-svg" id="donut-svg" width="110" height="110" viewBox="-1 -1 2 2"></svg>
+      <div class="donut-legend" id="donut-legend"></div>
+    </div>
+  </div>
+
+  <!-- Year Mastery Table -->
+  <div class="ssec">
+    <div class="stitle">📅 年別習熟度</div>
+    <table class="yt" id="yt"></table>
+  </div>
+
+  <!-- Settings -->
+  <div class="ssec">
+    <div class="stitle">⚙️ 復習フィルター</div>
+    <div class="sc">
+      <div class="sr" onclick="setRF('all')"><div class="srt"><div class="srl">すべての単語</div></div><div class="srv" id="rf-all">✓</div></div>
+      <div class="sr" onclick="setRF('new')"><div class="srt"><div class="srl">未学習のみ</div></div><div class="srv" id="rf-new"></div></div>
+      <div class="sr" onclick="setRF('learning')"><div class="srt"><div class="srl">学習中のみ</div></div><div class="srv" id="rf-learning"></div></div>
+      <div class="sr" onclick="setRF('mastered')"><div class="srt"><div class="srl">習得済みのみ</div></div><div class="srv" id="rf-mastered"></div></div>
+    </div>
+  </div>
+  <div class="ssec">
+    <div class="stitle">⚙️ クイズ</div>
+    <div class="sc">
+      <div class="sr"><div class="srt"><div class="srl">出題数</div></div>
+        <select class="ssel" id="qcsel" onchange="saveSt('quizCount',this.value)">
+          <option value="10">10問</option><option value="20">20問</option>
+          <option value="30">30問</option><option value="50">50問</option>
+        </select>
+      </div>
+    </div>
+  </div>
+  <div class="ssec">
+    <div class="stitle">⚙️ 操作</div>
+    <div class="sc">
+      <div class="sr"><div class="srt"><div class="srl">カードをシャッフル</div></div><button class="sbtn2" onclick="shuf()">シャッフル</button></div>
+      <div class="sr"><div class="srt"><div class="srl">進捗をリセット</div><div class="srs">全単語を未学習に戻す</div></div><button class="sbtn2" style="background:var(--tx2)" onclick="resetP()">リセット</button></div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /content -->
+<nav id="nav">
+  <button class="nb active" onclick="sw('vr',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="18" rx="3"/><path d="M8 10h8M8 14h5"/></svg>復習</button>
+  <button class="nb" onclick="sw('vq',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01"/></svg>クイズ</button>
+  <button class="nb" onclick="sw('vw',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>単語帳</button>
+  <button class="nb" onclick="sw('va',this)" id="add-nb"><div class="badge" id="add-badge">0</div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>追加</button>
+  <button class="nb" onclick="sw('vst',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>統計</button>
+</nav>
+</div><!-- /app -->
+
+<script>
+// ── CONFIG ─────────────────────────────────────────────────────────────
+const VOCAB = {vj};
+const VALID_PIN = '{pin}';
+const GCID = '{gcid}';
+const AUTH_EMAIL = '{gemail}';
+const ALL_YEARS = {yrs_js};
+const POS_L = {{noun:'名詞',verb:'動詞',phrasal_verb:'句動詞',adjective:'形容詞',adverb:'副詞',expression:'表現',abbreviation:'略語'}};
+
+// ── AUTH ───────────────────────────────────────────────────────────────
+let pinBuf = '';
+
+function checkAuth() {{
+  if (sessionStorage.getItem('va') === '1') {{ unlock(); return; }}
+  if (GCID) {{
+    document.getElementById('google-btn-wrap').style.display = 'flex';
+    document.getElementById('lock-sep').style.display = 'flex';
+    loadGSI();
+  }}
+  // PIN always visible as fallback
+}}
+
+function loadGSI() {{
+  const s = document.createElement('script');
+  s.src = 'https://accounts.google.com/gsi/client';
+  s.async = true; s.defer = true;
+  s.onload = initGSI;
+  s.onerror = () => {{}}; // PIN still available
+  document.head.appendChild(s);
+}}
+
+function initGSI() {{
+  if (!window.google) return;
+  google.accounts.id.initialize({{
+    client_id: GCID,
+    callback: onGoogleCB,
+    auto_select: true,
+    cancel_on_tap_outside: false,
+    context: 'signin'
+  }});
+  google.accounts.id.renderButton(
+    document.getElementById('g-signin-btn').parentElement,
+    {{theme:'outline', size:'large', width:280, text:'signin_with'}}
+  );
+  google.accounts.id.prompt();
+}}
+
+function startGoogleSignIn() {{
+  if (window.google) google.accounts.id.prompt();
+}}
+
+function onGoogleCB(resp) {{
+  try {{
+    const pl = JSON.parse(atob(resp.credential.split('.')[1]));
+    if (AUTH_EMAIL && pl.email !== AUTH_EMAIL) {{
+      document.getElementById('lock-err').textContent = 'このアカウントはアクセスできません';
+      return;
+    }}
+    sessionStorage.setItem('va','1');
+    sessionStorage.setItem('vu', pl.name || pl.email);
+    sessionStorage.setItem('vav', (pl.name||'?')[0].toUpperCase());
+    unlock();
+  }} catch(e) {{ document.getElementById('lock-err').textContent = '認証エラー: '+e.message; }}
+}}
+
+function pinKey(n) {{
+  if (n === null) {{ pinBuf = pinBuf.slice(0,-1); }}
+  else if (pinBuf.length < 4) {{ pinBuf += String(n); }}
+  for (let i=0;i<4;i++) document.getElementById('d'+i).classList.toggle('f', i<pinBuf.length);
+  if (pinBuf.length === 4) {{
+    if (pinBuf === VALID_PIN) {{ sessionStorage.setItem('va','1'); unlock(); }}
+    else {{ document.getElementById('lock-err').textContent = '正しくないPINです'; pinBuf=''; for(let i=0;i<4;i++)document.getElementById('d'+i).classList.remove('f'); setTimeout(()=>document.getElementById('lock-err').textContent='',1500); }}
+  }}
+}}
+
+function unlock() {{
+  document.getElementById('lock').style.display = 'none';
+  document.getElementById('app').style.display = '';
+  const name = sessionStorage.getItem('vu');
+  if (name) {{
+    const av = sessionStorage.getItem('vav') || name[0].toUpperCase();
+    document.getElementById('user-badge-wrap').innerHTML =
+      `<div class="user-badge"><div class="user-av">${{av}}</div>${{esc(name)}}</div>`;
+  }}
+  initApp();
+}}
+
+// ── STATE ──────────────────────────────────────────────────────────────
+let prog={{}}, st={{quizCount:10,revFilter:'all'}};
+let deck=[],idx=0,flipped=false;
+let wf={{year:'all',pos:'all',mastery:'all',search:'',sortNew:true}};
+let pq=[];
+
+function loadSt() {{
+  try{{ prog=JSON.parse(localStorage.getItem('vp')||'{{}}'); }}catch(e){{}}
+  try{{
+    const s=JSON.parse(localStorage.getItem('vs')||'{{}}');
+    st={{...st,...s}};
+    document.getElementById('qcsel').value=st.quizCount;
+  }}catch(e){{}}
+  try{{ pq=JSON.parse(localStorage.getItem('vq')||'[]'); }}catch(e){{}}
+}}
+function savP(){{ localStorage.setItem('vp',JSON.stringify(prog)); }}
+function savSt(k,v){{ st[k]=v; localStorage.setItem('vs',JSON.stringify(st)); }}
+function savQ(){{ localStorage.setItem('vq',JSON.stringify(pq)); updQUI(); }}
+function gm(c){{ return prog[c.id]||c.mastery||'new'; }}
+
+// ── REVIEW ─────────────────────────────────────────────────────────────
+function buildDeck() {{
+  const rf=st.revFilter||'all';
+  deck = rf==='all' ? [...VOCAB] : VOCAB.filter(c=>gm(c)===rf);
+  idx=0;
+  document.getElementById('pfl').textContent={{all:'全て',new:'未学習',learning:'学習中',mastered:'習得済み'}}[rf]||'全て';
+  showC();
+}}
+function showC() {{
+  if(flipped){{ flipped=false; document.getElementById('card').classList.remove('flip'); }}
+  document.getElementById('ca').style.display='none';
+  const t=deck.length;
+  if(!t){{ document.getElementById('cword').textContent='該当なし'; document.getElementById('pt').textContent='0件'; return; }}
+  const c=deck[idx];
+  document.getElementById('cword').textContent=c.word;
+  document.getElementById('cmja').textContent=c.meaning_ja||'（意味未登録）';
+  document.getElementById('cmen').textContent=c.english_def||'';
+  const ex=c.example||'',nt=c.notes||'';
+  document.getElementById('cext').textContent=ex;
+  document.getElementById('cnote').textContent=nt;
+  document.getElementById('cex').style.display=(ex||nt)?'':'none';
+  const posL=POS_L[c.pos]||c.pos||'';
+  document.getElementById('cmeta').innerHTML=
+    (c.year?`<span class="ctag">${{c.year}}</span>`:'') +
+    (posL?`<span class="ctag">${{posL}}</span>`:'');
+  document.getElementById('pt').textContent=`${{idx+1}} / ${{t}}`;
+  document.getElementById('pf').style.width=`${{(idx/Math.max(1,t-1))*100}}%`;
+}}
+function flipC() {{
+  flipped=!flipped;
+  document.getElementById('card').classList.toggle('flip',flipped);
+  document.getElementById('ca').style.display=flipped?'flex':'none';
+}}
+function nav(d) {{
+  if(!deck.length) return;
+  idx=(idx+d+deck.length)%deck.length; showC();
+}}
+function mark(good) {{
+  if(!deck.length) return;
+  const c=deck[idx], cur=gm(c);
+  prog[c.id]=good?(cur==='new'?'learning':cur==='learning'?'mastered':'mastered'):(cur==='mastered'?'learning':'new');
+  savP(); nav(1);
+}}
+function shuf() {{ for(let i=deck.length-1;i>0;i--){{const j=Math.floor(Math.random()*(i+1));[deck[i],deck[j]]=[deck[j],deck[i]];}} idx=0; showC(); }}
+
+// Touch
+let tx=0,ty=0,tt=0;
+document.getElementById('cw').addEventListener('touchstart',e=>{{tx=e.touches[0].clientX;ty=e.touches[0].clientY;tt=Date.now();}},{{passive:true}});
+document.getElementById('cw').addEventListener('touchend',e=>{{
+  const dx=e.changedTouches[0].clientX-tx,dy=e.changedTouches[0].clientY-ty,dt=Date.now()-tt;
+  if(Math.abs(dx)>Math.abs(dy)&&Math.abs(dx)>50) nav(dx<0?1:-1);
+  else if(Math.abs(dx)<12&&Math.abs(dy)<12&&dt<300) flipC();
+}},{{passive:true}});
+document.getElementById('card').addEventListener('click',flipC);
+
+// ── QUIZ ───────────────────────────────────────────────────────────────
+let qqs=[],qi=0,qs=0;
+function startQ() {{
+  document.getElementById('qr').style.display='none';
+  document.getElementById('qq').style.display='';
+  document.getElementById('qcs').style.display='';
+  const pool=VOCAB.filter(c=>c.meaning_ja&&c.meaning_ja.trim());
+  const n=Math.min(parseInt(st.quizCount)||10,pool.length);
+  qqs=shufA([...pool]).slice(0,n); qi=0; qs=0; showQ();
+}}
+function showQ() {{
+  const q=qqs[qi];
+  document.getElementById('qqn').textContent=`問題 ${{qi+1}} / ${{qqs.length}}`;
+  document.getElementById('qq').textContent=q.word;
+  document.getElementById('qnext').style.display='none';
+  const wrong=shufA(VOCAB.filter(c=>c.id!==q.id&&c.meaning_ja&&c.meaning_ja.trim())).slice(0,3).map(c=>c.meaning_ja);
+  const opts=shufA([q.meaning_ja,...wrong]);
+  const el=document.getElementById('qcs'); el.innerHTML='';
+  opts.forEach(ch=>{{
+    const b=document.createElement('button'); b.className='qc'; b.textContent=ch;
+    b.onclick=()=>ansQ(b,ch===q.meaning_ja,q); el.appendChild(b);
+  }});
+}}
+function ansQ(btn,ok,q) {{
+  document.querySelectorAll('.qc').forEach(b=>{{b.disabled=true;if(b.textContent===q.meaning_ja)b.classList.add('correct');}});
+  if(!ok) btn.classList.add('wrong'); else qs++;
+  document.getElementById('qnext').style.display='';
+}}
+function nxtQ() {{
+  if(++qi>=qqs.length) {{
+    document.getElementById('qq').style.display='none';
+    document.getElementById('qcs').style.display='none';
+    document.getElementById('qnext').style.display='none';
+    document.getElementById('qr').style.display='';
+    document.getElementById('qsc').textContent=Math.round(qs/qqs.length*100)+'%';
+  }} else showQ();
+}}
+
+// ── WORDS ──────────────────────────────────────────────────────────────
+function filt() {{
+  let l=VOCAB;
+  if(wf.year!=='all') l=l.filter(c=>c.year===parseInt(wf.year));
+  if(wf.pos!=='all') l=l.filter(c=>c.pos===wf.pos);
+  if(wf.mastery!=='all') l=l.filter(c=>gm(c)===wf.mastery);
+  if(wf.search){{ const q=wf.search.toLowerCase(); l=l.filter(c=>c.word.toLowerCase().includes(q)||(c.meaning_ja||'').includes(q)||(c.example||'').toLowerCase().includes(q)); }}
+  return wf.sortNew ? [...l].reverse() : l;
+}}
+function renW() {{
+  const l=filt();
+  document.getElementById('wcount').textContent=`${{l.length}}件`;
+  const el=document.getElementById('wl');
+  if(!l.length){{ el.innerHTML='<div class="empty">該当する単語がありません</div>'; return; }}
+  el.innerHTML=l.slice(0,300).map(c=>{{
+    const m=gm(c), ml={{new:'未学習',learning:'学習中',mastered:'習得済み'}}[m], mc=`m${{m[0]}}`;
+    const mo=parseInt((c.date_added||'').split('/')[0])||'';
+    const dl=c.year?(c.year+(mo?'/'+mo:'')):'';
+    const pl=POS_L[c.pos]||c.pos||'';
+    return `<div class="wi"><div class="wit"><div class="wiw">${{esc(c.word)}}</div>
+      <div class="wib"><span class="mb ${{mc}}">${{ml}}</span>${{dl?`<span class="db">${{dl}}</span>`:''}}</div></div>
+      ${{c.meaning_ja?`<div class="wim">${{esc(c.meaning_ja)}}</div>`:''}}
+      ${{c.example?`<div class="wie">${{esc(c.example)}}</div>`:''}}
+      ${{pl?`<span class="ptag">${{pl}}</span>`:''}}
+    </div>`;
+  }}).join('');
+}}
+function setSrch(v){{wf.search=v;renW();}}
+function setY(v,b){{wf.year=v;chp('ybar',b);renW();}}
+function setP(v,b){{wf.pos=v;chp('pbar',b);renW();}}
+function setM(v,b){{wf.mastery=v;chp(b.parentElement,b);renW();}}
+function togSort(){{wf.sortNew=!wf.sortNew;document.getElementById('sortbtn').textContent=wf.sortNew?'新→旧':'旧→新';renW();}}
+function chp(p,b){{
+  const el=typeof p==='string'?document.getElementById(p):p;
+  if(el)el.querySelectorAll('.chip').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active');
+}}
+
+// ── ADD WORD ───────────────────────────────────────────────────────────
+function addW() {{
+  const w=document.getElementById('aw').value.trim();
+  if(!w){{alert('単語を入力してください');return;}}
+  const now=new Date();
+  pq.push({{word:w,notes:document.getElementById('an').value.trim(),date_added:`${{now.getMonth()+1}}/${{now.getDate()}}`}});
+  savQ();
+  document.getElementById('aw').value='';
+  document.getElementById('an').value='';
+  alert(`✓ "${{w}}" をキューに追加しました`);
+}}
+function remQ(i){{ pq.splice(i,1); savQ(); }}
+function updQUI() {{
+  const n=pq.length;
+  document.getElementById('qcnt').textContent=n;
+  const b=document.getElementById('add-badge');
+  b.textContent=n; b.style.display=n?'':'none';
+  document.getElementById('qempty').style.display=n?'none':'';
+  const pl=document.getElementById('plist'); pl.style.display=n?'':'none';
+  document.getElementById('expwrap').style.display=n?'':'none';
+  pl.innerHTML=pq.map((q,i)=>`<div class="pi"><div><div class="piw">${{esc(q.word)}}</div>${{q.notes?`<div style="font-size:12px;color:var(--tx2)">${{esc(q.notes)}}</div>`:''}}</div><button class="pdel" onclick="remQ(${{i}})">✕</button></div>`).join('');
+}}
+function expQ() {{
+  const a=document.createElement('a');
+  a.href='data:application/json;charset=utf-8,'+encodeURIComponent(JSON.stringify({{entries:pq}},null,2));
+  a.download='queue.json'; a.click();
+}}
+
+// ── STATS CHARTS ───────────────────────────────────────────────────────
+function renderTrend() {{
+  const yg={{}};
+  VOCAB.forEach(v=>{{ const y=v.year||2020; yg[y]=(yg[y]||0)+1; }});
+  const ys=ALL_YEARS.slice().reverse();
+  const max=Math.max(...Object.values(yg),1);
+  const W=60, PAD=10, H=160, BOTTOM=30, LABELH=16;
+  const barH=H-BOTTOM-LABELH-PAD;
+  const svgW=ys.length*W+PAD*2;
+  let rects='', texts='', nums='';
+  ys.forEach((y,i)=>{{
+    const cnt=yg[y]||0;
+    const bh=Math.round((cnt/max)*barH);
+    const x=PAD+i*W+8, bw=W-16;
+    const by=H-BOTTOM-bh;
+    const hue=200+i*20;
+    rects+=`<rect x="${{x}}" y="${{by}}" width="${{bw}}" height="${{bh}}" rx="6" fill="var(--ac)" opacity="${{0.5+0.5*(cnt/max)}}"/>`;
+    nums+=`<text x="${{x+bw/2}}" y="${{by-5}}" text-anchor="middle" font-size="11" font-weight="700" fill="var(--tx)">${{cnt}}</text>`;
+    texts+=`<text x="${{x+bw/2}}" y="${{H-BOTTOM+14}}" text-anchor="middle" font-size="11" fill="var(--tx2)">${{y}}</text>`;
+  }});
+  // Baseline
+  const base=`<line x1="${{PAD}}" y1="${{H-BOTTOM}}" x2="${{svgW-PAD}}" y2="${{H-BOTTOM}}" stroke="var(--bd)" stroke-width="1"/>`;
+  const svg=document.getElementById('trend-svg');
+  svg.setAttribute('width', svgW);
+  svg.innerHTML=base+rects+nums+texts;
+}}
+
+function renderDonut() {{
+  let n=0,l=0,m=0;
+  VOCAB.forEach(c=>{{ const x=gm(c); if(x==='new')n++;else if(x==='learning')l++;else m++; }});
+  const tot=VOCAB.length;
+  const segs=[
+    {{v:m,color:'var(--gn)',label:'習得済み'}},
+    {{v:l,color:'var(--yw)',label:'学習中'}},
+    {{v:n,color:'var(--pu)',label:'未学習'}},
+  ];
+  let angle=-Math.PI/2;
+  let paths='';
+  segs.forEach(s=>{{
+    if(!s.v) return;
+    const a=(s.v/tot)*Math.PI*2;
+    const x1=Math.cos(angle), y1=Math.sin(angle);
+    const x2=Math.cos(angle+a), y2=Math.sin(angle+a);
+    const large=a>Math.PI?1:0;
+    paths+=`<path d="M 0 0 L ${{x1.toFixed(3)}} ${{y1.toFixed(3)}} A 1 1 0 ${{large}} 1 ${{x2.toFixed(3)}} ${{y2.toFixed(3)}} Z" fill="${{s.color}}"/>`;
+    angle+=a;
+  }});
+  // Inner circle (donut hole)
+  paths+=`<circle cx="0" cy="0" r="0.55" fill="var(--sf)"/>`;
+  // Center label
+  const mastPct=Math.round(m/tot*100);
+  paths+=`<text x="0" y="-0.08" text-anchor="middle" font-size="0.26" font-weight="800" fill="var(--tx)">${{mastPct}}%</text>`;
+  paths+=`<text x="0" y="0.18" text-anchor="middle" font-size="0.14" fill="var(--tx2)">習得</text>`;
+  document.getElementById('donut-svg').innerHTML=paths;
+
+  const legend=segs.map(s=>`<div class="dl"><div class="dldot" style="background:${{s.color}}"></div>${{s.label}}<span class="dlnum">${{s.v}}</span></div>`).join('');
+  document.getElementById('donut-legend').innerHTML=legend;
+}}
+
+function renderYearTable() {{
+  const rows=ALL_YEARS.map(y=>{{
+    const words=VOCAB.filter(v=>(v.year||2020)===y);
+    const tot=words.length;
+    const m=words.filter(v=>gm(v)==='mastered').length;
+    const l=words.filter(v=>gm(v)==='learning').length;
+    const nw=tot-m-l;
+    const mp=tot?Math.round(m/tot*100):0;
+    const lp=tot?Math.round(l/tot*100):0;
+    const np=100-mp-lp;
+    return `<tr>
+      <td class="yn">${{y}}</td>
+      <td>${{tot}}</td>
+      <td>
+        <div style="font-size:11px;color:var(--tx2)">${{mp}}% 習得 / ${{lp}}% 学習中</div>
+        <div class="prog-seg">
+          <div class="seg-m" style="width:${{mp}}%"></div>
+          <div class="seg-l" style="width:${{lp}}%"></div>
+          <div class="seg-n" style="width:${{np}}%"></div>
+        </div>
+      </td>
+    </tr>`;
+  }}).join('');
+  document.getElementById('yt').innerHTML=
+    `<thead><tr><th>年</th><th>件数</th><th>習熟度</th></tr></thead><tbody>${{rows}}</tbody>`;
+}}
+
+function renderStats() {{
+  renderTrend();
+  renderDonut();
+  renderYearTable();
+}}
+
+// ── SETTINGS ───────────────────────────────────────────────────────────
+function setRF(f) {{
+  st.revFilter=f;
+  ['all','new','learning','mastered'].forEach(k=>document.getElementById('rf-'+k).textContent=f===k?'✓':'');
+  savSt('revFilter',f); buildDeck();
+}}
+function resetP() {{
+  if(!confirm('全ての進捗をリセットしますか？')) return;
+  prog={{}};savP();buildDeck();renW();renderStats();
+}}
+
+// ── NAV ────────────────────────────────────────────────────────────────
+function sw(id,btn) {{
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.nb').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  if(id==='vq')startQ();
+  if(id==='vw')renW();
+  if(id==='va')updQUI();
+  if(id==='vst'){{ renderStats(); ['all','new','learning','mastered'].forEach(k=>document.getElementById('rf-'+k).textContent=(st.revFilter===k)?'✓':''); }}
+}}
+
+// ── UTILS ──────────────────────────────────────────────────────────────
+function shufA(a){{for(let i=a.length-1;i>0;i--){{const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}}return a;}}
+function esc(s){{return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}}
+
+// ── INIT ───────────────────────────────────────────────────────────────
+function initApp() {{
+  loadSt();
+  buildDeck(); renW(); updQUI();
+  setRF(st.revFilter||'all');
+  if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{{}});
+}}
+
+checkAuth();
+if(sessionStorage.getItem('va')==='1'){{ unlock(); }}
+</script>
+</body>
+</html>"""
+
+def main():
+    with open(VOCAB_JSON, encoding='utf-8') as f:
+        vocab = json.load(f)
+    cfg = get_config()
+    html = generate(vocab, cfg)
+    with open(OUTPUT_HTML, 'w', encoding='utf-8') as f:
+        f.write(html)
+    gcid = cfg.get('google_client_id','')
+    auth = 'Google SSO' if gcid else 'PIN'
+    print(f"Generated {OUTPUT_HTML} ({len(vocab)} entries, auth={auth})")
+
+if __name__ == '__main__':
+    main()

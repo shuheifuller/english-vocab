@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+.DS_Store
+/tmp/
+*.bak
+*.swp
+# Obsidian workspace files
+.obsidian/
+*.canvas
+*.base
+Untitled*
+# Notion token is in config.json — keep notion_token empty in this repo
+# Old queue at root (moved to raw/)
+/queue.json

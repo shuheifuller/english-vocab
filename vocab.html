@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0f0f1a">
+<title>英語単語帳</title>
+<link rel="manifest" href="manifest.json">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#0f0f1a;--sf:#1a1a2e;--sf2:#16213e;--sf3:#0d1b38;
+  --ac:#e94560;--tx:#eaeaea;--tx2:#8892b0;--bd:#2a2a4a;
+  --gn:#4ade80;--yw:#fbbf24;--pu:#a78bfa;--bl:#60a5fa;
+  --r:16px;--st:env(safe-area-inset-top);--sb:env(safe-area-inset-bottom);
+}
+@media(prefers-color-scheme:light){
+  :root{--bg:#f0f2f8;--sf:#fff;--sf2:#e8ebf5;--sf3:#dce4f5;
+        --tx:#1a1a2e;--tx2:#5a6080;--bd:#d0d5e8;}
+}
+html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--tx)}
+#app{display:flex;flex-direction:column;height:100%;padding-top:var(--st)}
+/* ─── LOCK ─────────────────────────────────── */
+#lock{position:fixed;inset:0;background:var(--bg);z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:40px 24px}
+.lock-logo{font-size:52px;line-height:1}
+.lock-title{font-size:24px;font-weight:800;letter-spacing:-.5px;text-align:center}
+.lock-sub{font-size:13px;color:var(--tx2);text-align:center;max-width:280px}
+#google-btn-wrap{width:100%;max-width:280px;display:flex;flex-direction:column;align-items:center;gap:10px}
+.g-btn{display:flex;align-items:center;gap:10px;background:#fff;color:#3c4043;border:1px solid #dadce0;border-radius:24px;padding:10px 20px;font-size:14px;font-weight:500;cursor:pointer;width:100%;justify-content:center;transition:box-shadow .2s}
+.g-btn:hover{box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.g-btn svg{flex-shrink:0}
+.lock-sep{display:flex;align-items:center;gap:10px;color:var(--tx2);font-size:12px;width:100%;max-width:280px}
+.lock-sep::before,.lock-sep::after{content:'';flex:1;height:1px;background:var(--bd)}
+#pin-section{display:flex;flex-direction:column;align-items:center;gap:16px;width:100%;max-width:280px}
+.pin-dots{display:flex;gap:12px}
+.pin-dot{width:12px;height:12px;border-radius:50%;border:2px solid var(--tx2);transition:all .15s}
+.pin-dot.f{background:var(--ac);border-color:var(--ac)}
+.pin-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;width:100%}
+.pb{background:var(--sf);border:1px solid var(--bd);border-radius:12px;padding:16px;font-size:22px;font-weight:700;color:var(--tx);cursor:pointer;font-family:inherit;transition:all .1s}
+.pb:active{background:var(--sf2);transform:scale(.95)}
+.lock-err{color:var(--ac);font-size:12px;min-height:18px;text-align:center}
+/* ─── NAV ──────────────────────────────────── */
+#nav{display:flex;background:var(--sf);border-top:1px solid var(--bd);padding-bottom:var(--sb);flex-shrink:0;order:2}
+.nb{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 2px 8px;border:none;background:none;color:var(--tx2);font-size:9px;cursor:pointer;transition:color .2s;position:relative;font-family:inherit}
+.nb.active{color:var(--ac)}
+.nb svg{width:22px;height:22px;flex-shrink:0}
+.badge{position:absolute;top:6px;right:calc(50% - 18px);background:var(--ac);color:#fff;font-size:9px;font-weight:800;padding:1px 5px;border-radius:10px;display:none}
+/* ─── VIEWS ─────────────────────────────────── */
+#content{flex:1;overflow:hidden;position:relative;order:1}
+.view{position:absolute;inset:0;overflow-y:auto;display:none;flex-direction:column}
+.view.active{display:flex}
+.vh{padding:14px 16px 10px;display:flex;align-items:flex-start;justify-content:space-between;flex-shrink:0;gap:10px}
+.vtitle{font-size:18px;font-weight:800}
+.vsub{font-size:11px;color:var(--tx2);margin-top:2px}
+/* ─── FILTER CHIPS ──────────────────────────── */
+.fbar{display:flex;gap:6px;padding:0 16px 8px;overflow-x:auto;flex-shrink:0;-webkit-overflow-scrolling:touch}
+.fbar::-webkit-scrollbar{display:none}
+.chip{padding:6px 14px;border-radius:20px;border:1px solid var(--bd);background:none;color:var(--tx2);font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:inherit;transition:all .15s;flex-shrink:0}
+.chip.active{background:var(--ac);color:#fff;border-color:var(--ac)}
+.chip.pn.active{background:#3b82f6;border-color:#3b82f6}
+.chip.pv.active{background:#22c55e;border-color:#22c55e}
+.chip.ppv.active{background:#10b981;border-color:#10b981}
+.chip.pa.active{background:#f97316;border-color:#f97316}
+.chip.pad.active{background:#a855f7;border-color:#a855f7}
+.chip.pe.active{background:#e94560;border-color:#e94560}
+.chip.pab.active{background:#6b7280;border-color:#6b7280}
+/* ─── REVIEW ────────────────────────────────── */
+#vr{align-items:center;justify-content:center;gap:0;padding:14px 16px 10px}
+.pw{width:100%;max-width:400px;margin-bottom:12px;flex-shrink:0}
+.pb2{height:4px;background:var(--bd);border-radius:2px;overflow:hidden}
+.pf{height:100%;background:var(--ac);transition:width .3s}
+.pl{display:flex;justify-content:space-between;font-size:11px;color:var(--tx2);margin-top:5px}
+.cw{flex:1;width:100%;max-width:400px;perspective:1000px;cursor:pointer;min-height:0}
+.card{width:100%;height:100%;position:relative;transform-style:preserve-3d;transition:transform .45s cubic-bezier(.4,0,.2,1)}
+.card.flip{transform:rotateY(180deg)}
+.cf{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;background:var(--sf);border-radius:var(--r);padding:24px 20px;display:flex;flex-direction:column;border:1px solid var(--bd);box-shadow:0 8px 32px rgba(0,0,0,.2)}
+.cb{transform:rotateY(180deg)}
+.clbl{font-size:10px;color:var(--tx2);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;font-weight:700}
+.cword{font-size:clamp(20px,5vw,30px);font-weight:800;line-height:1.2;flex:1;display:flex;align-items:center}
+.chint{font-size:12px;color:var(--tx2);text-align:center;margin-top:auto}
+.cb .clbl{color:var(--ac)}
+.cmeta{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+.ctag{font-size:10px;padding:2px 8px;border-radius:10px;font-weight:700;background:var(--sf2);color:var(--tx2)}
+.cmja{font-size:clamp(15px,3.5vw,19px);font-weight:700;margin-bottom:10px;line-height:1.4}
+.cmen{font-size:12px;color:var(--tx2);margin-bottom:12px;line-height:1.6;font-style:italic}
+.cex{background:var(--sf2);border-radius:10px;padding:10px 12px;margin-bottom:auto}
+.cexl{font-size:9px;color:var(--ac);text-transform:uppercase;letter-spacing:1px;margin-bottom:5px;font-weight:800}
+.cext{font-size:12px;line-height:1.6}
+.cnote{font-size:11px;color:var(--tx2);margin-top:6px;line-height:1.5;font-style:italic}
+.ca{display:flex;gap:8px;width:100%;max-width:400px;flex-shrink:0;margin-top:10px}
+.ab{flex:1;padding:12px 8px;border-radius:12px;border:none;font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;font-family:inherit}
+.again{background:rgba(233,69,96,.15);color:var(--ac)}
+.good{background:rgba(74,222,128,.15);color:var(--gn)}
+.again:active{background:rgba(233,69,96,.3)}
+.good:active{background:rgba(74,222,128,.3)}
+.arr{display:flex;gap:10px;width:100%;max-width:400px;justify-content:center;margin-top:6px;flex-shrink:0}
+.arb{background:var(--sf2);border:1px solid var(--bd);color:var(--tx2);width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px}
+.arb:active{background:var(--bd)}
+.sh{font-size:10px;color:var(--tx2);text-align:center;margin-top:4px;flex-shrink:0}
+/* ─── QUIZ ──────────────────────────────────── */
+.qqn{font-size:12px;color:var(--tx2);padding:12px 16px 0;flex-shrink:0}
+.qq{font-size:clamp(20px,5vw,28px);font-weight:800;padding:16px;line-height:1.3}
+.qcs{display:flex;flex-direction:column;gap:10px;padding:0 16px}
+.qc{background:var(--sf);border:2px solid var(--bd);border-radius:12px;padding:14px;font-size:14px;text-align:left;cursor:pointer;color:var(--tx);font-family:inherit;line-height:1.4;width:100%}
+.qc.correct{border-color:var(--gn);background:rgba(74,222,128,.1)}
+.qc.wrong{border-color:var(--ac);background:rgba(233,69,96,.1)}
+.qc:disabled{cursor:default}
+.qnext{margin:16px;background:var(--ac);color:#fff;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;width:calc(100%-32px);cursor:pointer;font-family:inherit;display:none;width:calc(100% - 32px)}
+.qr{text-align:center;padding:40px 20px}
+.qsc{font-size:56px;font-weight:900;color:var(--ac)}
+.qsl{font-size:15px;color:var(--tx2);margin-top:6px}
+.qrst{margin-top:24px;background:var(--ac);color:#fff;border:none;border-radius:12px;padding:14px 32px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit}
+/* ─── WORDS ─────────────────────────────────── */
+#vw .vh{flex-direction:column;align-items:stretch;gap:8px}
+.srow{display:flex;gap:8px;align-items:center}
+.sbox{flex:1;background:var(--sf);border:1px solid var(--bd);border-radius:10px;padding:10px 14px;font-size:15px;color:var(--tx);font-family:inherit;outline:none}
+.sbox::placeholder{color:var(--tx2)}
+.sbtn{background:var(--sf);border:1px solid var(--bd);border-radius:10px;padding:10px 12px;font-size:12px;color:var(--tx2);cursor:pointer;font-family:inherit;white-space:nowrap}
+.wl{flex:1;overflow-y:auto;padding:0 16px 8px}
+.wi{background:var(--sf);border-radius:12px;padding:12px 14px;margin-bottom:8px;border:1px solid var(--bd)}
+.wit{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.wiw{font-size:15px;font-weight:700;flex:1;line-height:1.3}
+.wib{display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0}
+.mb{font-size:9px;padding:2px 7px;border-radius:10px;font-weight:700}
+.db{font-size:9px;color:var(--tx2);font-weight:600}
+.mn{background:rgba(167,139,250,.15);color:var(--pu)}
+.ml{background:rgba(251,191,36,.15);color:var(--yw)}
+.mm{background:rgba(74,222,128,.15);color:var(--gn)}
+.wim{font-size:12px;color:var(--tx2);margin-top:5px;line-height:1.5}
+.wie{font-size:11px;color:var(--tx2);margin-top:3px;font-style:italic;line-height:1.4}
+.ptag{display:inline-block;font-size:9px;padding:2px 7px;border-radius:6px;font-weight:700;margin-top:4px;background:var(--sf2);color:var(--tx2)}
+/* ─── ADD ───────────────────────────────────── */
+#va{padding-bottom:20px}
+.fsec{padding:0 16px 14px}
+.flbl{font-size:12px;color:var(--tx2);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;font-weight:700;display:block}
+.fi{width:100%;background:var(--sf);border:1px solid var(--bd);border-radius:10px;padding:12px 14px;font-size:15px;color:var(--tx);font-family:inherit;outline:none;transition:border-color .2s}
+.fi:focus{border-color:var(--ac)}
+.fi::placeholder{color:var(--tx2)}
+textarea.fi{min-height:80px;resize:vertical;line-height:1.5}
+.subbtn{width:100%;background:var(--ac);color:#fff;border:none;border-radius:12px;padding:16px;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit}
+.subbtn:active{opacity:.8}
+.psec{background:var(--sf);border-radius:12px;border:1px solid var(--bd);overflow:hidden}
+.pi{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--bd);gap:8px}
+.pi:last-child{border-bottom:none}
+.piw{font-size:14px;font-weight:700}
+.pdel{background:none;border:none;color:var(--ac);cursor:pointer;font-size:16px;padding:4px}
+.expbtn{width:100%;background:var(--sf2);color:var(--tx);border:1px solid var(--bd);border-radius:12px;padding:14px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit}
+.empty{text-align:center;padding:28px;color:var(--tx2);font-size:14px}
+.divider{height:1px;background:var(--bd);margin:0 16px 16px}
+/* ─── STATS ─────────────────────────────────── */
+#vst{padding-bottom:40px}
+.ssec{padding:0 16px 20px}
+.stitle{font-size:11px;color:var(--tx2);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;font-weight:700}
+/* Guide */
+.guide-card{background:var(--sf);border-radius:14px;border:1px solid var(--bd);overflow:hidden}
+.guide-item{display:flex;gap:14px;padding:14px 16px;border-bottom:1px solid var(--bd);align-items:flex-start}
+.guide-item:last-child{border-bottom:none}
+.guide-icon{font-size:24px;flex-shrink:0;margin-top:2px}
+.guide-title{font-size:14px;font-weight:700;margin-bottom:4px}
+.guide-body{font-size:12px;color:var(--tx2);line-height:1.6}
+.guide-code{font-family:monospace;background:var(--sf2);border-radius:6px;padding:2px 6px;font-size:11px;color:var(--ac)}
+/* Trend chart */
+.chart-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.chart-scroll::-webkit-scrollbar{display:none}
+#trend-svg{display:block}
+/* Mastery donut */
+.donut-wrap{display:flex;align-items:center;gap:20px;padding:4px 0 16px}
+.donut-svg{flex-shrink:0}
+.donut-legend{display:flex;flex-direction:column;gap:8px;flex:1}
+.dl{display:flex;align-items:center;gap:8px;font-size:13px}
+.dldot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.dlnum{font-weight:700;margin-left:auto}
+/* Year mastery table */
+.yt{width:100%;border-collapse:collapse;font-size:12px}
+.yt th{text-align:left;color:var(--tx2);font-weight:600;padding:6px 8px 10px;font-size:11px;border-bottom:1px solid var(--bd)}
+.yt td{padding:8px;border-bottom:1px solid var(--bd);vertical-align:middle}
+.yt tr:last-child td{border-bottom:none}
+.yt .yn{font-weight:700}
+.prog-seg{height:8px;border-radius:4px;overflow:hidden;background:var(--bd);display:flex;margin-top:4px}
+.seg-m{background:var(--gn)}
+.seg-l{background:var(--yw)}
+.seg-n{background:var(--pu)}
+.pct{color:var(--tx2);font-size:11px}
+/* Settings card */
+.sc{background:var(--sf);border-radius:12px;overflow:hidden;border:1px solid var(--bd)}
+.sr{display:flex;align-items:center;padding:13px 16px;border-bottom:1px solid var(--bd);gap:10px;cursor:pointer}
+.sr:last-child{border-bottom:none}
+.srt{flex:1}
+.srl{font-size:14px;font-weight:500}
+.srs{font-size:11px;color:var(--tx2);margin-top:2px}
+.srv{font-size:13px;color:var(--ac);font-weight:700;flex-shrink:0}
+.sbtn2{background:var(--ac);color:#fff;border:none;border-radius:8px;padding:7px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit}
+.ssel{background:var(--sf2);color:var(--tx);border:1px solid var(--bd);border-radius:8px;padding:7px 10px;font-size:13px;font-family:inherit;outline:none}
+/* User badge */
+.user-badge{background:var(--sf);border:1px solid var(--bd);border-radius:24px;padding:6px 14px 6px 8px;display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600}
+.user-av{width:28px;height:28px;border-radius:50%;background:var(--ac);display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;font-weight:800;flex-shrink:0}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ LOCK ═══════════════════════ -->
+<div id="lock">
+  <div class="lock-logo">📚</div>
+  <div class="lock-title">英語単語帳</div>
+  <div class="lock-sub">Shuheiの個人英語学習帳</div>
+
+  <!-- Google SSO (shows when client_id configured) -->
+  <div id="google-btn-wrap" style="display:none;flex-direction:column;align-items:center;gap:12px;width:100%;max-width:280px">
+    <button class="g-btn" id="g-signin-btn" onclick="startGoogleSignIn()">
+      <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z"/></svg>
+      Googleアカウントでログイン
+    </button>
+    <div id="g-one-tap"></div>
+  </div>
+
+  <!-- Separator (shows when both modes available) -->
+  <div class="lock-sep" id="lock-sep" style="display:none">または</div>
+
+  <!-- PIN fallback -->
+  <div id="pin-section">
+    <div class="pin-dots">
+      <div class="pin-dot" id="d0"></div><div class="pin-dot" id="d1"></div>
+      <div class="pin-dot" id="d2"></div><div class="pin-dot" id="d3"></div>
+    </div>
+    <div class="lock-err" id="lock-err"></div>
+    <div class="pin-grid">
+      <button class="pb" onclick="pinKey(1)">1</button><button class="pb" onclick="pinKey(2)">2</button><button class="pb" onclick="pinKey(3)">3</button><button class="pb" onclick="pinKey(4)">4</button><button class="pb" onclick="pinKey(5)">5</button><button class="pb" onclick="pinKey(6)">6</button><button class="pb" onclick="pinKey(7)">7</button><button class="pb" onclick="pinKey(8)">8</button><button class="pb" onclick="pinKey(9)">9</button>
+      <button class="pb" onclick="pinKey(null)" style="font-size:18px">⌫</button>
+      <button class="pb" onclick="pinKey(0)">0</button>
+      <button class="pb" style="visibility:hidden"></button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ APP ════════════════════════ -->
+<div id="app" style="display:none">
+<div id="content">
+
+<!-- REVIEW -->
+<div id="vr" class="view active">
+  <div class="pw">
+    <div class="pb2"><div class="pf" id="pf" style="width:0%"></div></div>
+    <div class="pl"><span id="pt">411件</span><span id="pfl">全て</span></div>
+  </div>
+  <div class="cw" id="cw">
+    <div class="card" id="card">
+      <div class="cf">
+        <div class="clbl">英語</div>
+        <div class="cword" id="cword">-</div>
+        <div class="chint">タップでめくる</div>
+      </div>
+      <div class="cf cb">
+        <div class="clbl">意味</div>
+        <div class="cmeta" id="cmeta"></div>
+        <div class="cmja" id="cmja"></div>
+        <div class="cmen" id="cmen"></div>
+        <div class="cex" id="cex">
+          <div class="cexl">例文</div>
+          <div class="cext" id="cext"></div>
+          <div class="cnote" id="cnote"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="ca" id="ca" style="display:none">
+    <button class="ab again" onclick="mark(false)">もう一度 ↺</button>
+    <button class="ab good" onclick="mark(true)">わかった！ ✓</button>
+  </div>
+  <div class="arr">
+    <button class="arb" onclick="nav(-1)">←</button>
+    <button class="arb" onclick="nav(1)">→</button>
+  </div>
+  <div class="sh">← 前 / 次 →　タップでめくる</div>
+</div>
+
+<!-- QUIZ -->
+<div id="vq" class="view">
+  <div class="qqn" id="qqn">問題 1/10</div>
+  <div class="qq" id="qq"></div>
+  <div class="qcs" id="qcs"></div>
+  <button class="qnext" id="qnext" onclick="nxtQ()">次の問題 →</button>
+  <div class="qr" id="qr" style="display:none">
+    <div class="qsc" id="qsc"></div>
+    <div class="qsl">正解率</div>
+    <button class="qrst" onclick="startQ()">もう一度</button>
+  </div>
+</div>
+
+<!-- WORDS -->
+<div id="vw" class="view">
+  <div class="vh">
+    <div><div class="vtitle">単語一覧</div><div class="vsub" id="wcount">411件</div></div>
+    <div class="srow" style="width:100%">
+      <input class="sbox" placeholder="検索…" oninput="setSrch(this.value)">
+      <button class="sbtn" onclick="togSort()" id="sortbtn">新→旧</button>
+    </div>
+  </div>
+  <div class="fbar" id="ybar">
+    <button class="chip active" onclick="setY('all',this)">全年</button>
+    <button class="chip" onclick="setY(2025,this)">2025</button><button class="chip" onclick="setY(2024,this)">2024</button><button class="chip" onclick="setY(2023,this)">2023</button><button class="chip" onclick="setY(2022,this)">2022</button><button class="chip" onclick="setY(2021,this)">2021</button><button class="chip" onclick="setY(2020,this)">2020</button>
+  </div>
+  <div class="fbar" id="pbar">
+    <button class="chip active" onclick="setP('all',this)">全品詞</button>
+    <button class="chip pn" onclick="setP('noun',this)">名詞</button>
+    <button class="chip pv" onclick="setP('verb',this)">動詞</button>
+    <button class="chip ppv" onclick="setP('phrasal_verb',this)">句動詞</button>
+    <button class="chip pa" onclick="setP('adjective',this)">形容詞</button>
+    <button class="chip pad" onclick="setP('adverb',this)">副詞</button>
+    <button class="chip pe" onclick="setP('expression',this)">表現</button>
+    <button class="chip pab" onclick="setP('abbreviation',this)">略語</button>
+  </div>
+  <div class="fbar">
+    <button class="chip active" onclick="setM('all',this)">全習熟度</button>
+    <button class="chip" onclick="setM('new',this)">未学習</button>
+    <button class="chip" onclick="setM('learning',this)">学習中</button>
+    <button class="chip" onclick="setM('mastered',this)">習得済み</button>
+  </div>
+  <div class="wl" id="wl"></div>
+</div>
+
+<!-- ADD -->
+<div id="va" class="view">
+  <div class="vh"><div><div class="vtitle">単語を追加</div><div class="vsub">意味・品詞は自動検索されます</div></div></div>
+  <div class="fsec">
+    <label class="flbl">単語 / 表現 *</label>
+    <input class="fi" id="aw" placeholder="例: reconcile, in a nutshell" autocorrect="off" autocapitalize="none">
+  </div>
+  <div class="fsec">
+    <label class="flbl">メモ（任意）</label>
+    <textarea class="fi" id="an" placeholder="どこで出会った？気になった点など…"></textarea>
+  </div>
+  <div class="fsec"><button class="subbtn" onclick="addW()">キューに追加 →</button></div>
+  <div class="divider"></div>
+  <div class="fsec">
+    <div class="stitle">追加待ちキュー（<span id="qcnt">0</span>件）</div>
+    <div id="qempty" class="empty" style="display:none">追加待ちの単語はありません</div>
+    <div class="psec" id="plist"></div>
+  </div>
+  <div class="fsec" id="expwrap" style="display:none">
+    <button class="expbtn" onclick="expQ()">📥 queue.json をダウンロード<br><small style="font-weight:400;opacity:.7">raw/queue.json を置き換えて python3 sync.py を実行してください</small></button>
+  </div>
+</div>
+
+<!-- STATS -->
+<div id="vst" class="view">
+  <div class="vh">
+    <div><div class="vtitle">統計・設定</div></div>
+    <div id="user-badge-wrap"></div>
+  </div>
+
+  <!-- Usage Guide -->
+  <div class="ssec">
+    <div class="stitle">📖 使い方</div>
+    <div class="guide-card">
+      <div class="guide-item">
+        <div class="guide-icon">💬</div>
+        <div>
+          <div class="guide-title">Claudeに話しかけて単語を追加</div>
+          <div class="guide-body">Claude Code で <span class="guide-code">「reconcileをvocabに追加して」</span> と話しかけるだけ。辞書検索・品詞判定・日本語訳・例文が自動で登録され、このページも更新されます。</div>
+        </div>
+      </div>
+      <div class="guide-item">
+        <div class="guide-icon">📱</div>
+        <div>
+          <div class="guide-title">オフラインで単語をキューに追加</div>
+          <div class="guide-body">「追加」タブで単語を入力 → キューに保存。PCに戻ったら <span class="guide-code">queue.json をダウンロード</span> して <span class="guide-code">raw/</span> に置き、<span class="guide-code">python3 sync.py</span> を実行してください。</div>
+        </div>
+      </div>
+      <div class="guide-item">
+        <div class="guide-icon">🃏</div>
+        <div>
+          <div class="guide-title">フラッシュカードで復習</div>
+          <div class="guide-body">タップでカードをめくる。スワイプ左右で次/前の単語。「わかった！」でLearning→Masteredに昇格。</div>
+        </div>
+      </div>
+      <div class="guide-item">
+        <div class="guide-icon">🧩</div>
+        <div>
+          <div class="guide-title">クイズで確認</div>
+          <div class="guide-body">4択クイズで記憶を定着。設定から出題数（10〜50問）を変更できます。</div>
+        </div>
+      </div>
+      <div class="guide-item">
+        <div class="guide-icon">🔍</div>
+        <div>
+          <div class="guide-title">単語帳で検索・フィルター</div>
+          <div class="guide-body">年・品詞（名詞/動詞/句動詞/形容詞/副詞/表現/略語）・習熟度で絞り込みができます。</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Trend Chart -->
+  <div class="ssec">
+    <div class="stitle">📈 単語追加トレンド（年別）</div>
+    <div class="chart-scroll">
+      <svg id="trend-svg" height="180"></svg>
+    </div>
+  </div>
+
+  <!-- Mastery Donut -->
+  <div class="ssec">
+    <div class="stitle">📊 現在の習熟度</div>
+    <div class="donut-wrap">
+      <svg class="donut-svg" id="donut-svg" width="110" height="110" viewBox="-1 -1 2 2"></svg>
+      <div class="donut-legend" id="donut-legend"></div>
+    </div>
+  </div>
+
+  <!-- Year Mastery Table -->
+  <div class="ssec">
+    <div class="stitle">📅 年別習熟度</div>
+    <table class="yt" id="yt"></table>
+  </div>
+
+  <!-- Settings -->
+  <div class="ssec">
+    <div class="stitle">⚙️ 復習フィルター</div>
+    <div class="sc">
+      <div class="sr" onclick="setRF('all')"><div class="srt"><div class="srl">すべての単語</div></div><div class="srv" id="rf-all">✓</div></div>
+      <div class="sr" onclick="setRF('new')"><div class="srt"><div class="srl">未学習のみ</div></div><div class="srv" id="rf-new"></div></div>
+      <div class="sr" onclick="setRF('learning')"><div class="srt"><div class="srl">学習中のみ</div></div><div class="srv" id="rf-learning"></div></div>
+      <div class="sr" onclick="setRF('mastered')"><div class="srt"><div class="srl">習得済みのみ</div></div><div class="srv" id="rf-mastered"></div></div>
+    </div>
+  </div>
+  <div class="ssec">
+    <div class="stitle">⚙️ クイズ</div>
+    <div class="sc">
+      <div class="sr"><div class="srt"><div class="srl">出題数</div></div>
+        <select class="ssel" id="qcsel" onchange="saveSt('quizCount',this.value)">
+          <option value="10">10問</option><option value="20">20問</option>
+          <option value="30">30問</option><option value="50">50問</option>
+        </select>
+      </div>
+    </div>
+  </div>
+  <div class="ssec">
+    <div class="stitle">⚙️ 操作</div>
+    <div class="sc">
+      <div class="sr"><div class="srt"><div class="srl">カードをシャッフル</div></div><button class="sbtn2" onclick="shuf()">シャッフル</button></div>
+      <div class="sr"><div class="srt"><div class="srl">進捗をリセット</div><div class="srs">全単語を未学習に戻す</div></div><button class="sbtn2" style="background:var(--tx2)" onclick="resetP()">リセット</button></div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /content -->
+<nav id="nav">
+  <button class="nb active" onclick="sw('vr',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="18" rx="3"/><path d="M8 10h8M8 14h5"/></svg>復習</button>
+  <button class="nb" onclick="sw('vq',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01"/></svg>クイズ</button>
+  <button class="nb" onclick="sw('vw',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>単語帳</button>
+  <button class="nb" onclick="sw('va',this)" id="add-nb"><div class="badge" id="add-badge">0</div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>追加</button>
+  <button class="nb" onclick="sw('vst',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>統計</button>
+</nav>
+</div><!-- /app -->
+
+<script>
+// ── CONFIG ─────────────────────────────────────────────────────────────
+const VOCAB = [{"id": 1, "word": "So much so that SVO", "meaning_ja": "とてもそうなのでthat以下をしたほど", "english_def": "", "example": "So much so that they have chosen ANZ for help since site option became available in PSAP", "notes": "", "date_added": "1/6", "mastery": "new", "year": 2025, "pos": "expression"}, {"id": 2, "word": "Antisemitism", "meaning_ja": "反ユダヤ主義", "english_def": "", "example": "", "notes": "", "date_added": "1/22", "mastery": "new", "year": 2025, "pos": "noun"}, {"id": 3, "word": "Homophone (C)", "meaning_ja": "同音異義 - 同じ方法で発音されるが、意味またはつづり方または両方ともにおいて異なるならば、2つの語は同音異義語である（例えば、bare（露出する）、bear（持って行く））", "english_def": "", "example": "", "notes": "", "date_added": "1/23", "mastery": "new", "year": 2025, "pos": "noun"}, {"id": 4, "word": "Divide and conquer", "meaning_ja": "", "english_def": "", "example": "", "notes": "", "date_added": "2/14", "mastery": "new", "year": 2025, "pos": "expression"}, {"id": 5, "word": "Caveat", "meaning_ja": "警告、注意 (=warning)", "english_def": "", "example": "", "notes": "", "date_added": "3/9", "mastery": "new", "year": 2025, "pos": "noun"}, {"id": 6, "word": "Pyramid scheme", "meaning_ja": "ネズミこう、マルチ商法", "english_def": "", "example": "", "notes": "", "date_added": "5/14", "mastery": "new", "year": 2025, "pos": "expression"}, {"id": 7, "word": "Relinquish ST", "meaning_ja": "STを手放す、捨てる", "english_def": "", "example": "Musk's temporary relinquishing of the chairman role", "notes": "Relinquishment (noun)", "date_added": "1/8", "mastery": "new", "year": 2024, "pos": "verb"}, {"id": 8, "word": "Pro-(ST)", "meaning_ja": "STを支持する人／団体", "english_def": "", "example": "Pro-Palestinian (パレスチナ人支持の)", "notes": "", "date_added": "1/9", "mastery": "new", "year": 2024, "pos": "verb"}, {"id": 9, "word": "Not to mention", "meaning_ja": "言うまでもなく", "english_def": "", "example": "", "notes": "", "date_added": "1/11", "mastery": "new", "year": 2024, "pos": "expression"}, {"id": 10, "word": "Actualize ST", "meaning_ja": "STを具体化する", "english_def": "", "example": "", "notes": "", "date_added": "1/17", "mastery": "new", "year": 2024, "pos": "verb"}, {"id": 11, "word": "Exponential", "meaning_ja": "指数関数的に", "english_def": "", "example": "", "notes": "", "date_added": "1/24", "mastery": "new", "year": 2024, "pos": "adjective"}, {"id": 12, "word": "Alluding question", "meaning_ja": "", "english_def": "", "example": "", "notes": "", "date_added": "2/1", "mastery": "new", "year": 2024, "pos": "expression"}, {"id": 13, "word": "Allude to ST", "meaning_ja": "STをほのめかす、暗示する", "english_def": "", "example": "", "notes": "", "date_added": "2/1", "mastery": "new", "year": 2024, "pos": "phrasal_verb"}, {"id": 14, "word": "Pugnacious", "meaning_ja": "武力または暴力に訴えることのできるまたは用意のある", "english_def": "", "example": "Tony Abott was overly pugnacious", "notes": "", "date_added": "2/12", "mastery": "new", "year": 2024, "pos": "adjective"}, {"id": 15, "word": "Coalition (=alliance)", "meaning_ja": "連合、アライアンス", "english_def": "", "example": "", "notes": "", "date_added": "2/19", "mastery": "new", "year": 2024, "pos": "noun"}, {"id": 16, "word": "Break grass option", "meaning_ja": "緊急の場合に普段制限されている権限を与えるオプション", "english_def": "", "example": "", "notes": "", "date_added": "3/15", "mastery": "new", "year": 2024, "pos": "expression"}, {"id": 17, "word": "In a nutshell", "meaning_ja": "一言で言えば", "english_def": "", "example": "", "notes": "", "date_added": "4/19", "mastery": "new", "year": 2024, "pos": "expression"}, {"id": 18, "word": "No brainer", "meaning_ja": "当たり前、考える必要がない、簡単すぎる", "english_def": "", "example": "", "notes": "", "date_added": "4/22", "mastery": "new", "year": 2024, "pos": "expression"}, {"id": 19, "word": "Piggy back ST", "meaning_ja": "", "english_def": "", "example": "", "notes": "", "date_added": "5/2", "mastery": "new", "year": 2024, "pos": "phrasal_verb"}, {"id": 20, "word": "Apathy", "meaning_ja": "無関心、無頓着、無気力", "english_def": "", "example": "", "notes": "", "date_added": "5/30", "mastery": "new", "year": 2024, "pos": "noun"}, {"id": 21, "word": "In retrospect", "meaning_ja": "振り返ってみると、", "english_def": "", "example": "", "notes": "", "date_added": "6/5", "mastery": "new", "year": 2024, "pos": "expression"}, {"id": 22, "word": "Convoluted", "meaning_ja": "ややこしい、複雑すぎる", "english_def": "", "example": "", "notes": "", "date_added": "6/13", "mastery": "new", "year": 2024, "pos": "noun"}, {"id": 23, "word": "Preconceived notions", "meaning_ja": "先入観", "english_def": "", "example": "", "notes": "", "date_added": "6/14", "mastery": "new", "year": 2024, "pos": "expression"}, {"id": 24, "word": "Gaffe", "meaning_ja": "失言", "english_def": "", "example": "", "notes": "", "date_added": "7/12", "mastery": "new", "year": 2024, "pos": "noun"}, {"id": 25, "word": "et al", "meaning_ja": "その他各位、~など、~およびその他", "english_def": "", "example": "(メールの宛名で) Hi Shuhei et al", "notes": "", "date_added": "7/23", "mastery": "new", "year": 2024, "pos": "abbreviation"}, {"id": 26, "word": "Postmortem", "meaning_ja": "事後", "english_def": "", "example": "I'll investigate what happened postmortem", "notes": "", "date_added": "7/24", "mastery": "new", "year": 2024, "pos": "noun"}, {"id": 27, "word": "Misology", "meaning_ja": "嫌悪", "english_def": "", "example": "I will not be lectured sexism and misology by this man (quote from Julia Gillard)", "notes": "", "date_added": "7/26", "mastery": "new", "year": 2024, "pos": "noun"}, {"id": 28, "word": "Overarching", "meaning_ja": "包括的な", "english_def": "", "example": "It'd be an overarching statement", "notes": "", "date_added": "8/6", "mastery": "new", "year": 2024, "pos": "noun"}, {"id": 29, "word": "Demean SO", "meaning_ja": "SOを辱める", "english_def": "", "example": "", "notes": "", "date_added": "11/2", "mastery": "new", "year": 2024, "pos": "verb"}, {"id": 30, "word": "Nitty-gritty", "meaning_ja": "核心、本題", "english_def": "", "example": "", "notes": "", "date_added": "11/15", "mastery": "new", "year": 2024, "pos": "noun"}, {"id": 31, "word": "Bread and butter", "meaning_ja": "最も重要なもの、必要不可欠なもの", "english_def": "", "example": "Problem solving skills are leader's bread and butter in many ways", "notes": "", "date_added": "12/21", "mastery": "new", "year": 2024, "pos": "expression"}, {"id": 32, "word": "Caveat (C)", "meaning_ja": "警告、注意", "english_def": "", "example": "There are some important caveats to keep in mind when promoting and wining with LLMs", "notes": "", "date_added": "12/30", "mastery": "new", "year": 2024, "pos": "noun"}, {"id": 33, "word": "Conform to ST", "meaning_ja": "STに従う、準ずる、同調する", "english_def": "", "example": "", "notes": "", "date_added": "1/2", "mastery": "new", "year": 2023, "pos": "phrasal_verb"}, {"id": 34, "word": "Conformism", "meaning_ja": "同調主義", "english_def": "", "example": "", "notes": "", "date_added": "1/2", "mastery": "new", "year": 2023, "pos": "noun"}, {"id": 35, "word": "Actions speak louder than words", "meaning_ja": "", "english_def": "", "example": "", "notes": "", "date_added": "1/6", "mastery": "new", "year": 2023, "pos": "expression"}, {"id": 36, "word": "Low hanging fruit", "meaning_ja": "簡単に得られるもの、達成できること", "english_def": "", "example": "If the ask is a low hanging fruit, let's push for it", "notes": "", "date_added": "2/11", "mastery": "new", "year": 2023, "pos": "expression"}, {"id": 37, "word": "Drawn out", "meaning_ja": "引き伸ばされた、長々とした", "english_def": "", "example": "", "notes": "", "date_added": "2/11", "mastery": "new", "year": 2023, "pos": "expression"}, {"id": 38, "word": "Just because", "meaning_ja": "なんとなく、そんな気分だったから", "english_def": "", "example": "", "notes": "", "date_added": "2/18", "mastery": "new", "year": 2023, "pos": "expression"}, {"id": 39, "word": "Wholesome", "meaning_ja": "健全、健康的な", "english_def": "", "example": "", "notes": "", "date_added": "3/17", "mastery": "new", "year": 2023, "pos": "adjective"}, {"id": 40, "word": "Porpoise", "meaning_ja": "(パフォーマンスが)不安定な", "english_def": "", "example": "", "notes": "", "date_added": "3/17", "mastery": "new", "year": 2023, "pos": "verb"}, {"id": 41, "word": "Arbitrarily", "meaning_ja": "ランダムに、無作為に", "english_def": "", "example": "", "notes": "", "date_added": "4/18", "mastery": "new", "year": 2023, "pos": "adverb"}, {"id": 42, "word": "Remuneration", "meaning_ja": "報酬", "english_def": "", "example": "", "notes": "", "date_added": "4/24", "mastery": "new", "year": 2023, "pos": "noun"}, {"id": 43, "word": "Double down", "meaning_ja": "", "english_def": "", "example": "", "notes": "", "date_added": "4/24", "mastery": "new", "year": 2023, "pos": "expression"}, {"id": 44, "word": "Fabricator", "meaning_ja": "でっちあげ", "english_def": "", "example": "", "notes": "", "date_added": "4/24", "mastery": "new", "year": 2023, "pos": "noun"}, {"id": 45, "word": "Made redundant", "meaning_ja": "リストラされる、失業する、不必要になる", "english_def": "", "example": "I was made redundant", "notes": "", "date_added": "5/3", "mastery": "new", "year": 2023, "pos": "expression"}, {"id": 46, "word": "Autonomy", "meaning_ja": "自主性、自由、自治権", "english_def": "", "example": "", "notes": "", "date_added": "5/5", "mastery": "new", "year": 2023, "pos": "noun"}, {"id": 47, "word": "Mortality", "meaning_ja": "死亡率", "english_def": "", "example": "", "notes": "", "date_added": "5/13", "mastery": "new", "year": 2023, "pos": "noun"}, {"id": 48, "word": "Soap actress", "meaning_ja": "昼ドラ女優", "english_def": "", "example": "", "notes": "", "date_added": "5/19", "mastery": "new", "year": 2023, "pos": "expression"}, {"id": 49, "word": "Mole", "meaning_ja": "ほくろ", "english_def": "", "example": "", "notes": "", "date_added": "6/6", "mastery": "new", "year": 2023, "pos": "noun"}, {"id": 50, "word": "Supposedly", "meaning_ja": "噂によれば", "english_def": "", "example": "", "notes": "", "date_added": "6/14", "mastery": "new", "year": 2023, "pos": "adverb"}, {"id": 51, "word": "Vent", "meaning_ja": "発散する、不満を吐き出す", "english_def": "", "example": "", "notes": "", "date_added": "6/17", "mastery": "new", "year": 2023, "pos": "adjective"}, {"id": 52, "word": "Standard deviation", "meaning_ja": "標準偏差", "english_def": "", "example": "", "notes": "", "date_added": "6/28", "mastery": "new", "year": 2023, "pos": "expression"}, {"id": 53, "word": "Coefficient of Variation (CoV)", "meaning_ja": "変動係数", "english_def": "", "example": "", "notes": "", "date_added": "6/28", "mastery": "new", "year": 2023, "pos": "expression"}, {"id": 54, "word": "Coefficient", "meaning_ja": "係数", "english_def": "", "example": "", "notes": "", "date_added": "6/28", "mastery": "new", "year": 2023, "pos": "adjective"}, {"id": 55, "word": "Pragmatic", "meaning_ja": "実践的な", "english_def": "", "example": "", "notes": "", "date_added": "6/29", "mastery": "new", "year": 2023, "pos": "adjective"}, {"id": 56, "word": "Patriarchy", "meaning_ja": "家長制", "english_def": "", "example": "", "notes": "", "date_added": "7/2", "mastery": "new", "year": 2023, "pos": "noun"}, {"id": 57, "word": "Bystander effect", "meaning_ja": "傍観者効果", "english_def": "", "example": "ある事件に対して、自分以外に傍観者がいる時に率先して行動を起こさなくなる心理", "notes": "", "date_added": "7/2", "mastery": "new", "year": 2023, "pos": "expression"}, {"id": 58, "word": "Mishmash", "meaning_ja": "寄せ集め", "english_def": "", "example": "It's a mishmash of terms that we use", "notes": "", "date_added": "7/2", "mastery": "new", "year": 2023, "pos": "noun"}, {"id": 59, "word": "Overlay ST", "meaning_ja": "STを横に並べる", "english_def": "", "example": "You need to overlay risks, findings and recommendations", "notes": "", "date_added": "7/14", "mastery": "new", "year": 2023, "pos": "verb"}, {"id": 60, "word": "Down Under", "meaning_ja": "オーストラリア", "english_def": "", "example": "", "notes": "", "date_added": "7/18", "mastery": "new", "year": 2023, "pos": "expression"}, {"id": 61, "word": "If the juice is worth the squeeze", "meaning_ja": "", "english_def": "", "example": "We'd need to figure out if the juice is worth the squeeze on our capacity vs improved cx", "notes": "", "date_added": "7/18", "mastery": "new", "year": 2023, "pos": "expression"}, {"id": 62, "word": "Flesh out", "meaning_ja": "", "english_def": "", "example": "", "notes": "", "date_added": "7/24", "mastery": "new", "year": 2023, "pos": "expression"}, {"id": 63, "word": "Cervix", "meaning_ja": "", "english_def": "", "example": "", "notes": "", "date_added": "7/27", "mastery": "new", "year": 2023, "pos": "noun"}, {"id": 64, "word": "Connotation", "meaning_ja": "ほのめかし、暗示", "english_def": "", "example": "", "notes": "", "date_added": "7/30", "mastery": "new", "year": 2023, "pos": "noun"}, {"id": 65, "word": "Yet another", "meaning_ja": "さらに別に(さらにを強調)", "english_def": "", "example": "Another is used when we want to add one thing to one thing else or to a short list. Yet another is used to add one thing to a long list that was mentioned before.", "notes": "", "date_added": "9/3", "mastery": "new", "year": 2023, "pos": "expression"}, {"id": 66, "word": "Decay", "meaning_ja": "", "english_def": "", "example": "", "notes": "", "date_added": "9/6", "mastery": "new", "year": 2023, "pos": "noun"}, {"id": 67, "word": "Quotation", "meaning_ja": "見積もり", "english_def": "", "example": "", "notes": "", "date_added": "9/6", "mastery": "new", "year": 2023, "pos": "noun"}, {"id": 68, "word": "Pathology", "meaning_ja": "", "english_def": "", "example": "", "notes": "", "date_added": "9/6", "mastery": "new", "year": 2023, "pos": "noun"}, {"id": 69, "word": "Voluntold", "meaning_ja": "嫌々ボランティア活動に従事させられる", "english_def": "", "example": "", "notes": "", "date_added": "9/14", "mastery": "new", "year": 2023, "pos": "noun"}, {"id": 70, "word": "Alluded question", "meaning_ja": "", "english_def": "", "example": "", "notes": "", "date_added": "9/14", "mastery": "new", "year": 2023, "pos": "expression"}, {"id": 71, "word": "Nasal Congestion", "meaning_ja": "鼻詰まり", "english_def": "", "example": "", "notes": "", "date_added": "9/27", "mastery": "new", "year": 2023, "pos": "expression"}, {"id": 72, "word": "Champion ST", "meaning_ja": "擁護する、守る、庇う", "english_def": "", "example": "Champion a sense of belonging at AWS", "notes": "", "date_added": "10/11", "mastery": "new", "year": 2023, "pos": "verb"}, {"id": 73, "word": "Be suss on ST/SO", "meaning_ja": "に疑いをかける", "english_def": "", "example": "", "notes": "", "date_added": "11/3", "mastery": "new", "year": 2023, "pos": "phrasal_verb"}, {"id": 74, "word": "Social butterfly", "meaning_ja": "八方美人", "english_def": "", "example": "", "notes": "", "date_added": "11/6", "mastery": "new", "year": 2023, "pos": "expression"}, {"id": 75, "word": "Brick and mortar companies", "meaning_ja": "(実店舗で)店舗経営をする会社", "english_def": "", "example": "", "notes": "", "date_added": "11/27", "mastery": "new", "year": 2023, "pos": "expression"}, {"id": 76, "word": "Shameless Plug", "meaning_ja": "アピールするのも恥ずかしいようなこと", "english_def": "", "example": "", "notes": "", "date_added": "12/22", "mastery": "new", "year": 2023, "pos": "expression"}, {"id": 77, "word": "Goes by in a blink of an eye", "meaning_ja": "またたく間に過ぎる。瞬きぐらい一瞬で過ぎる", "english_def": "", "example": "Ten years at AWS. It went by in a blink of an eye", "notes": "", "date_added": "12/30", "mastery": "new", "year": 2023, "pos": "expression"}, {"id": 78, "word": "Like to like", "meaning_ja": "", "english_def": "", "example": "", "notes": "", "date_added": "1/5", "mastery": "new", "year": 2022, "pos": "expression"}, {"id": 79, "word": "Speak/Talk of the devil", "meaning_ja": "噂をすれば、", "english_def": "", "example": "", "notes": "", "date_added": "1/6", "mastery": "new", "year": 2022, "pos": "expression"}, {"id": 80, "word": "Vandals", "meaning_ja": "野蛮人", "english_def": "", "example": "People who do vandalism", "notes": "", "date_added": "1/6", "mastery": "new", "year": 2022, "pos": "noun"}, {"id": 81, "word": "Bronchitis", "meaning_ja": "気管支炎", "english_def": "", "example": "", "notes": "", "date_added": "1/12", "mastery": "new", "year": 2022, "pos": "noun"}, {"id": 82, "word": "Preempt", "meaning_ja": "先取りする", "english_def": "", "example": "", "notes": "", "date_added": "1/12", "mastery": "new", "year": 2022, "pos": "noun"}, {"id": 83, "word": "Cabin fever", "meaning_ja": "", "english_def": "", "example": "", "notes": "", "date_added": "1/17", "mastery": "new", "year": 2022, "pos": "expression"}, {"id": 84, "word": "Fertilization treatment", "meaning_ja": "不妊治療", "english_def": "", "example": "", "notes": "", "date_added": "1/18", "mastery": "new", "year": 2022, "pos": "expression"}, {"id": 85, "word": "Ear-pleasing", "meaning_ja": "聞こえのいい", "english_def": "", "example": "", "notes": "", "date_added": "1/26", "mastery": "new", "year": 2022, "pos": "noun"}, {"id": 86, "word": "Derail", "meaning_ja": "を脱線させる", "english_def": "", "example": "I don't wanna derail the conversation but", "notes": "", "date_added": "2/1", "mastery": "new", "year": 2022, "pos": "noun"}, {"id": 87, "word": "Flying blind", "meaning_ja": "", "english_def": "", "example": "", "notes": "", "date_added": "2/4", "mastery": "new", "year": 2022, "pos": "expression"}, {"id": 88, "word": "MIA (missing in action)", "meaning_ja": "行方不明、連絡がつかない、ご無沙汰", "english_def": "", "example": "Apologies for going MIA today", "notes": "", "date_added": "2/8", "mastery": "new", "year": 2022, "pos": "abbreviation"}, {"id": 89, "word": "Fwiw (for what it's worth)", "meaning_ja": "これはあくまで私の個人的な意見ですが", "english_def": "", "example": "", "notes": "", "date_added": "2/12", "mastery": "new", "year": 2022, "pos": "noun"}, {"id": 90, "word": "Myopic", "meaning_ja": "目先のことしか考えない、短絡的な、近視眼的な", "english_def": "", "example": "", "notes": "", "date_added": "2/12", "mastery": "new", "year": 2022, "pos": "adjective"}, {"id": 91, "word": "Guardrails", "meaning_ja": "", "english_def": "", "example": "What are the guardrails?", "notes": "", "date_added": "2/15", "mastery": "new", "year": 2022, "pos": "noun"}, {"id": 92, "word": "Jurisdiction", "meaning_ja": "管轄", "english_def": "", "example": "", "notes": "", "date_added": "2/15", "mastery": "new", "year": 2022, "pos": "noun"}, {"id": 93, "word": "Sovereignty", "meaning_ja": "主権", "english_def": "", "example": "Ukraine is fighting for their sovereignty", "notes": "", "date_added": "2/24", "mastery": "new", "year": 2022, "pos": "noun"}, {"id": 94, "word": "Dwarf", "meaning_ja": "を妨げる、小さく見せる", "english_def": "", "example": "Russia's firepower dwarfs Ukraine", "notes": "", "date_added": "2/24", "mastery": "new", "year": 2022, "pos": "noun"}, {"id": 95, "word": "Vow (ST or to do ST)", "meaning_ja": "STを誓う", "english_def": "", "example": "", "notes": "", "date_added": "2/24", "mastery": "new", "year": 2022, "pos": "verb"}, {"id": 96, "word": "Two cents", "meaning_ja": "パッと思いついたこと、簡単な考え", "english_def": "", "example": "", "notes": "", "date_added": "3/1", "mastery": "new", "year": 2022, "pos": "expression"}, {"id": 97, "word": "Shelling", "meaning_ja": "砲撃、集中砲火", "english_def": "", "example": "", "notes": "", "date_added": "3/1", "mastery": "new", "year": 2022, "pos": "noun"}, {"id": 98, "word": "Human trafficking", "meaning_ja": "人身売買", "english_def": "", "example": "", "notes": "", "date_added": "3/21", "mastery": "new", "year": 2022, "pos": "expression"}, {"id": 99, "word": "Cater for ST", "meaning_ja": "STに応じる、応える、満たす", "english_def": "", "example": "", "notes": "", "date_added": "3/21", "mastery": "new", "year": 2022, "pos": "phrasal_verb"}, {"id": 100, "word": "Templatize", "meaning_ja": "テンプレート化する", "english_def": "", "example": "", "notes": "", "date_added": "4/5", "mastery": "new", "year": 2022, "pos": "verb"}, {"id": 101, "word": "Go south", "meaning_ja": "が悪化する", "english_def": "", "example": "It would've gone south quickly", "notes": "", "date_added": "4/5", "mastery": "new", "year": 2022, "pos": "expression"}, {"id": 102, "word": "Hold SO accountable for ST", "meaning_ja": "SOにSTの責任を負わせる", "english_def": "", "example": "", "notes": "", "date_added": "4/12", "mastery": "new", "year": 2022, "pos": "phrasal_verb"}, {"id": 103, "word": "Solidarity", "meaning_ja": "一致団結、結束、連帯", "english_def": "", "example": "", "notes": "", "date_added": "5/30", "mastery": "new", "year": 2022, "pos": "noun"}, {"id": 104, "word": "(The) Wild West", "meaning_ja": "未開の地、新しく不明な点が多い", "english_def": "", "example": "Face recognition is the Wild West", "notes": "", "date_added": "6/16", "mastery": "new", "year": 2022, "pos": "expression"}, {"id": 105, "word": "Puberty", "meaning_ja": "思春期", "english_def": "", "example": "", "notes": "", "date_added": "6/20", "mastery": "new", "year": 2022, "pos": "noun"}, {"id": 106, "word": "Speak of the devil", "meaning_ja": "ちょうど噂をすれば", "english_def": "", "example": "", "notes": "", "date_added": "6/20", "mastery": "new", "year": 2022, "pos": "expression"}, {"id": 107, "word": "Exhaustive", "meaning_ja": "完全な、網羅的な、包括的な", "english_def": "", "example": "", "notes": "", "date_added": "7/1", "mastery": "new", "year": 2022, "pos": "adjective"}, {"id": 108, "word": "Solicit", "meaning_ja": "", "english_def": "", "example": "Solicit the name", "notes": "", "date_added": "7/3", "mastery": "new", "year": 2022, "pos": "noun"}, {"id": 109, "word": "Double down on ST", "meaning_ja": "", "english_def": "", "example": "Big data team wants to double down on our recruiting effort", "notes": "", "date_added": "7/15", "mastery": "new", "year": 2022, "pos": "phrasal_verb"}, {"id": 110, "word": "Go along with ST", "meaning_ja": "STに同意", "english_def": "", "example": "I'd go along with that", "notes": "", "date_added": "7/15", "mastery": "new", "year": 2022, "pos": "phrasal_verb"}, {"id": 111, "word": "No brainer", "meaning_ja": "思考を必要としないもの", "english_def": "", "example": "It seems obvious and no brainer to me", "notes": "", "date_added": "7/15", "mastery": "new", "year": 2022, "pos": "expression"}, {"id": 112, "word": "Going once going twice", "meaning_ja": "ミーティングなどを閉める前にする最終確認のためのカウントダウン", "english_def": "", "example": "", "notes": "", "date_added": "7/15", "mastery": "new", "year": 2022, "pos": "expression"}, {"id": 113, "word": "Exasperate SO", "meaning_ja": "SOを憤慨させる、激怒させる", "english_def": "", "example": "", "notes": "", "date_added": "7/17", "mastery": "new", "year": 2022, "pos": "verb"}, {"id": 114, "word": "Give SO the benefit of the doubt", "meaning_ja": "(疑わしいところはあるが)SOの言動を信じる", "english_def": "", "example": "", "notes": "", "date_added": "10/7", "mastery": "new", "year": 2022, "pos": "verb"}, {"id": 115, "word": "So be it", "meaning_ja": "それならそれでいい", "english_def": "", "example": "", "notes": "", "date_added": "10/7", "mastery": "new", "year": 2022, "pos": "expression"}, {"id": 116, "word": "Man of culture", "meaning_ja": "(文化人を皮肉った)変態/すけべ", "english_def": "", "example": "", "notes": "", "date_added": "10/8", "mastery": "new", "year": 2022, "pos": "expression"}, {"id": 117, "word": "Add up", "meaning_ja": "おかしい、正しくない、つじつまが合わない", "english_def": "", "example": "Does not add up = does not make sense", "notes": "", "date_added": "11/1", "mastery": "new", "year": 2022, "pos": "expression"}, {"id": 118, "word": "Underdog", "meaning_ja": "負け犬", "english_def": "", "example": "", "notes": "", "date_added": "11/6", "mastery": "new", "year": 2022, "pos": "noun"}, {"id": 119, "word": "Ultimatum", "meaning_ja": "最後の通告、最終決断", "english_def": "", "example": "Set an ultimatum", "notes": "", "date_added": "11/8", "mastery": "new", "year": 2022, "pos": "noun"}, {"id": 120, "word": "Voluntary Administration", "meaning_ja": "破産手続き", "english_def": "", "example": "Deliveroo goes into voluntary administration", "notes": "", "date_added": "11/16", "mastery": "new", "year": 2022, "pos": "expression"}, {"id": 121, "word": "Leeway", "meaning_ja": "許容範囲", "english_def": "", "example": "Is it a reporting leeway?", "notes": "", "date_added": "12/20", "mastery": "new", "year": 2022, "pos": "noun"}, {"id": 122, "word": "Homy", "meaning_ja": "家庭的", "english_def": "", "example": "", "notes": "", "date_added": "1/1", "mastery": "new", "year": 2021, "pos": "noun"}, {"id": 123, "word": "Contraception", "meaning_ja": "避妊(法)", "english_def": "", "example": "Artificial contraception - 人口避妊", "notes": "", "date_added": "1/2", "mastery": "new", "year": 2021, "pos": "noun"}, {"id": 124, "word": "Kerb", "meaning_ja": "縁石", "english_def": "", "example": "", "notes": "", "date_added": "1/6", "mastery": "new", "year": 2021, "pos": "noun"}, {"id": 125, "word": "Skew", "meaning_ja": "(事実など)を歪める、を歪曲する", "english_def": "", "example": "", "notes": "", "date_added": "1/12", "mastery": "new", "year": 2021, "pos": "noun"}, {"id": 126, "word": "Streak", "meaning_ja": "流れ、連続", "english_def": "", "example": "Have a major self-destructive streak in you", "notes": "", "date_added": "1/13", "mastery": "new", "year": 2021, "pos": "noun"}, {"id": 127, "word": "Torpedo ST", "meaning_ja": "STを破壊する、撃沈する", "english_def": "", "example": "You kind of torpedo every romantic relationship you're in", "notes": "", "date_added": "1/13", "mastery": "new", "year": 2021, "pos": "verb"}, {"id": 128, "word": "Mistress", "meaning_ja": "愛人、不倫相手", "english_def": "", "example": "", "notes": "", "date_added": "1/13", "mastery": "new", "year": 2021, "pos": "noun"}, {"id": 129, "word": "Autism", "meaning_ja": "自閉症", "english_def": "", "example": "", "notes": "", "date_added": "1/13", "mastery": "new", "year": 2021, "pos": "noun"}, {"id": 130, "word": "Inhale", "meaning_ja": "空気を吸い込む、吸引する", "english_def": "", "example": "", "notes": "", "date_added": "1/13", "mastery": "new", "year": 2021, "pos": "noun"}, {"id": 131, "word": "Exhale", "meaning_ja": "空気を吐き出す", "english_def": "", "example": "Breath out", "notes": "", "date_added": "1/13", "mastery": "new", "year": 2021, "pos": "noun"}, {"id": 132, "word": "Sever ST", "meaning_ja": "STを断ち切る", "english_def": "", "example": "Severing all contacts with the Trump organization", "notes": "", "date_added": "1/14", "mastery": "new", "year": 2021, "pos": "verb"}, {"id": 133, "word": "Incitement", "meaning_ja": "扇動、鼓舞、誘因", "english_def": "", "example": "", "notes": "", "date_added": "1/14", "mastery": "new", "year": 2021, "pos": "adjective"}, {"id": 134, "word": "Insurrection", "meaning_ja": "反逆、反乱、謀反", "english_def": "", "example": "", "notes": "", "date_added": "1/14", "mastery": "new", "year": 2021, "pos": "noun"}, {"id": 135, "word": "Give SO Silent Treatment", "meaning_ja": "SOにだんまりを決め込む", "english_def": "", "example": "", "notes": "", "date_added": "1/14", "mastery": "new", "year": 2021, "pos": "verb"}, {"id": 136, "word": "Procreate", "meaning_ja": "子供を産む", "english_def": "", "example": "", "notes": "", "date_added": "1/15", "mastery": "new", "year": 2021, "pos": "verb"}, {"id": 137, "word": "My hats off to SO", "meaning_ja": "SOに脱帽する、を称賛する", "english_def": "", "example": "Take one's hat off", "notes": "", "date_added": "1/15", "mastery": "new", "year": 2021, "pos": "phrasal_verb"}, {"id": 138, "word": "In accordance with ST", "meaning_ja": "STに合わせて", "english_def": "", "example": "Change in accordance with the situation", "notes": "", "date_added": "1/15", "mastery": "new", "year": 2021, "pos": "phrasal_verb"}, {"id": 139, "word": "Variant", "meaning_ja": "変異種", "english_def": "", "example": "Researchers are concerned by the fact that the new coronavirus variant is spreading so quickly", "notes": "", "date_added": "1/19", "mastery": "new", "year": 2021, "pos": "adjective"}, {"id": 140, "word": "Inauguration", "meaning_ja": "就任", "english_def": "", "example": "", "notes": "", "date_added": "1/21", "mastery": "new", "year": 2021, "pos": "noun"}, {"id": 141, "word": "Cause of action", "meaning_ja": "方針、やり方、行動様式", "english_def": "", "example": "", "notes": "", "date_added": "1/22", "mastery": "new", "year": 2021, "pos": "expression"}, {"id": 142, "word": "Happen in a vacuum", "meaning_ja": "他と無関係に起こる", "english_def": "", "example": "", "notes": "", "date_added": "2/7", "mastery": "new", "year": 2021, "pos": "expression"}, {"id": 143, "word": "Take sides with SO", "meaning_ja": "SOの一方を支持する", "english_def": "", "example": "", "notes": "", "date_added": "2/7", "mastery": "new", "year": 2021, "pos": "phrasal_verb"}, {"id": 144, "word": "Amicable", "meaning_ja": "円満な、友好的な", "english_def": "", "example": "Amicable divorce: 円満離婚", "notes": "", "date_added": "2/7", "mastery": "new", "year": 2021, "pos": "adjective"}, {"id": 145, "word": "Abduct SO", "meaning_ja": "拉致する", "english_def": "", "example": "", "notes": "", "date_added": "2/7", "mastery": "new", "year": 2021, "pos": "verb"}, {"id": 146, "word": "Go walkabout", "meaning_ja": "放浪生活に出る、行方不明", "english_def": "", "example": "", "notes": "", "date_added": "2/7", "mastery": "new", "year": 2021, "pos": "expression"}, {"id": 147, "word": "Make X default to Y", "meaning_ja": "XをYより優先させる", "english_def": "", "example": "How do I make Excel default to numbers on Mac?", "notes": "", "date_added": "2/8", "mastery": "new", "year": 2021, "pos": "phrasal_verb"}, {"id": 148, "word": "Rebate", "meaning_ja": "払い戻し、還付", "english_def": "", "example": "", "notes": "", "date_added": "2/8", "mastery": "new", "year": 2021, "pos": "verb"}, {"id": 149, "word": "Look around the corner", "meaning_ja": "先を見越す", "english_def": "", "example": "", "notes": "", "date_added": "2/10", "mastery": "new", "year": 2021, "pos": "expression"}, {"id": 150, "word": "Open the kimono with SO", "meaning_ja": "SOに秘密の情報を明かす", "english_def": "", "example": "", "notes": "", "date_added": "2/11", "mastery": "new", "year": 2021, "pos": "phrasal_verb"}, {"id": 151, "word": "Cringe", "meaning_ja": "", "english_def": "", "example": "", "notes": "", "date_added": "2/11", "mastery": "new", "year": 2021, "pos": "noun"}, {"id": 152, "word": "Acquitted", "meaning_ja": "潔白な、無罪な", "english_def": "", "example": "", "notes": "", "date_added": "2/14", "mastery": "new", "year": 2021, "pos": "noun"}, {"id": 153, "word": "Workation", "meaning_ja": "WorkとVacationを組み合わせた", "english_def": "", "example": "", "notes": "", "date_added": "2/17", "mastery": "new", "year": 2021, "pos": "noun"}, {"id": 154, "word": "Resuscitate", "meaning_ja": "蘇生する", "english_def": "", "example": "Do-not-resuscitate form", "notes": "", "date_added": "2/20", "mastery": "new", "year": 2021, "pos": "verb"}, {"id": 155, "word": "Not my cup of tea", "meaning_ja": "興味がない", "english_def": "", "example": "It's not my cup of tea", "notes": "", "date_added": "2/20", "mastery": "new", "year": 2021, "pos": "expression"}, {"id": 156, "word": "Pull ST off", "meaning_ja": "STをやり切る、達成する", "english_def": "", "example": "", "notes": "", "date_added": "2/24", "mastery": "new", "year": 2021, "pos": "phrasal_verb"}, {"id": 157, "word": "Tuberculosis", "meaning_ja": "結核", "english_def": "", "example": "", "notes": "", "date_added": "3/3", "mastery": "new", "year": 2021, "pos": "noun"}, {"id": 158, "word": "In light of", "meaning_ja": "", "english_def": "", "example": "", "notes": "", "date_added": "3/3", "mastery": "new", "year": 2021, "pos": "expression"}, {"id": 159, "word": "Out of league", "meaning_ja": "格が違う、スバ抜けて優秀、高嶺の花", "english_def": "", "example": "My friend Megan is out of league", "notes": "", "date_added": "3/3", "mastery": "new", "year": 2021, "pos": "expression"}, {"id": 160, "word": "Monarchy", "meaning_ja": "君主制", "english_def": "", "example": "", "notes": "", "date_added": "3/11", "mastery": "new", "year": 2021, "pos": "noun"}, {"id": 161, "word": "Bring SO up to speed", "meaning_ja": "SOに必要な情報を伝えて状況を理解させる", "english_def": "", "example": "", "notes": "", "date_added": "3/20", "mastery": "new", "year": 2021, "pos": "phrasal_verb"}, {"id": 162, "word": "Misogyny", "meaning_ja": "女性嫌悪", "english_def": "", "example": "", "notes": "", "date_added": "3/26", "mastery": "new", "year": 2021, "pos": "noun"}, {"id": 163, "word": "Xenophobia", "meaning_ja": "外国人嫌悪", "english_def": "", "example": "", "notes": "", "date_added": "3/26", "mastery": "new", "year": 2021, "pos": "noun"}, {"id": 164, "word": "Microcosm", "meaning_ja": "縮図", "english_def": "", "example": "Amazon is a microcosm of the world in some ways", "notes": "", "date_added": "4/2", "mastery": "new", "year": 2021, "pos": "noun"}, {"id": 165, "word": "Assimilate", "meaning_ja": "を取り込む、取り入れる", "english_def": "", "example": "The organization expects employees to assimilate to a certain degree", "notes": "", "date_added": "4/2", "mastery": "new", "year": 2021, "pos": "verb"}, {"id": 166, "word": "Resentment", "meaning_ja": "恨み、憎しみ", "english_def": "", "example": "", "notes": "", "date_added": "4/2", "mastery": "new", "year": 2021, "pos": "adjective"}, {"id": 167, "word": "Trailblazer", "meaning_ja": "草分け的存在、パイオニア", "english_def": "", "example": "", "notes": "", "date_added": "4/2", "mastery": "new", "year": 2021, "pos": "noun"}, {"id": 168, "word": "Leukaemia", "meaning_ja": "白血病", "english_def": "", "example": "", "notes": "", "date_added": "4/6", "mastery": "new", "year": 2021, "pos": "noun"}, {"id": 169, "word": "Pediatric", "meaning_ja": "小児の", "english_def": "", "example": "Pediatric Cancer", "notes": "", "date_added": "4/6", "mastery": "new", "year": 2021, "pos": "adjective"}, {"id": 170, "word": "Streisand effect", "meaning_ja": "ストライサンド効果 - ある情報を隠蔽しようとする努力が、かえってその情報を広い範囲に拡散させてしまう現象", "english_def": "", "example": "", "notes": "", "date_added": "4/9", "mastery": "new", "year": 2021, "pos": "expression"}, {"id": 171, "word": "Break a leg", "meaning_ja": "頑張る、うまくやる", "english_def": "", "example": "", "notes": "", "date_added": "4/13", "mastery": "new", "year": 2021, "pos": "expression"}, {"id": 172, "word": "Off the top of my head", "meaning_ja": "パッと思いつく限り", "english_def": "", "example": "", "notes": "", "date_added": "4/22", "mastery": "new", "year": 2021, "pos": "expression"}, {"id": 173, "word": "You said it", "meaning_ja": "全くその通りだ", "english_def": "", "example": "Haha you said it!", "notes": "", "date_added": "5/15", "mastery": "new", "year": 2021, "pos": "expression"}, {"id": 174, "word": "Bystander", "meaning_ja": "傍観者", "english_def": "", "example": "", "notes": "", "date_added": "5/31", "mastery": "new", "year": 2021, "pos": "noun"}, {"id": 175, "word": "Retaliation", "meaning_ja": "リベンジ", "english_def": "", "example": "Retaliation is never accepted", "notes": "", "date_added": "5/31", "mastery": "new", "year": 2021, "pos": "noun"}, {"id": 176, "word": "Disciplinary action", "meaning_ja": "懲戒処分", "english_def": "", "example": "The employee will be subject to disciplinary action", "notes": "", "date_added": "5/31", "mastery": "new", "year": 2021, "pos": "expression"}, {"id": 177, "word": "Impeccable", "meaning_ja": "完璧な、非の打ち所がない", "english_def": "", "example": "", "notes": "", "date_added": "6/1", "mastery": "new", "year": 2021, "pos": "adjective"}, {"id": 178, "word": "Tell me about it", "meaning_ja": "本当にそうだよね", "english_def": "", "example": "", "notes": "", "date_added": "6/2", "mastery": "new", "year": 2021, "pos": "expression"}, {"id": 179, "word": "You can say that again", "meaning_ja": "本当にそうだよね", "english_def": "", "example": "", "notes": "", "date_added": "6/2", "mastery": "new", "year": 2021, "pos": "expression"}, {"id": 180, "word": "Indifferent", "meaning_ja": "そっけない、冷たい、無関心な", "english_def": "", "example": "", "notes": "", "date_added": "6/2", "mastery": "new", "year": 2021, "pos": "adjective"}, {"id": 181, "word": "Civil", "meaning_ja": "", "english_def": "", "example": "Keep it civil - 礼儀正しくしなよ", "notes": "", "date_added": "6/2", "mastery": "new", "year": 2021, "pos": "noun"}, {"id": 182, "word": "In one's favor", "meaning_ja": "xxに有利な", "english_def": "", "example": "Play in his favor", "notes": "", "date_added": "6/6", "mastery": "new", "year": 2021, "pos": "expression"}, {"id": 183, "word": "Arbitrary", "meaning_ja": "任意の、恣意的な、無作為な", "english_def": "", "example": "", "notes": "", "date_added": "6/6", "mastery": "new", "year": 2021, "pos": "adjective"}, {"id": 184, "word": "Tedious", "meaning_ja": "長ったらしい、つまらない、退屈な", "english_def": "", "example": "", "notes": "", "date_added": "6/6", "mastery": "new", "year": 2021, "pos": "adjective"}, {"id": 185, "word": "Hyperbolize", "meaning_ja": "言いすぎる、誇張する", "english_def": "", "example": "I cannot explain my experiences without hyperbolizing", "notes": "", "date_added": "6/13", "mastery": "new", "year": 2021, "pos": "verb"}, {"id": 186, "word": "Rest assured that", "meaning_ja": "(That以下のことを)確実であると思う", "english_def": "", "example": "Rest assured that you will have my ears to listen", "notes": "", "date_added": "6/15", "mastery": "new", "year": 2021, "pos": "expression"}, {"id": 187, "word": "In light of ST", "meaning_ja": "ST(新しい情報)を踏まえると", "english_def": "", "example": "In the realms of ST", "notes": "", "date_added": "6/19", "mastery": "new", "year": 2021, "pos": "phrasal_verb"}, {"id": 188, "word": "Genesis", "meaning_ja": "発生、起源、創生", "english_def": "", "example": "", "notes": "", "date_added": "6/19", "mastery": "new", "year": 2021, "pos": "noun"}, {"id": 189, "word": "Tepid", "meaning_ja": "生ぬるい", "english_def": "", "example": "", "notes": "", "date_added": "6/19", "mastery": "new", "year": 2021, "pos": "noun"}, {"id": 190, "word": "She'll be right (Aussie slang)", "meaning_ja": "Whatever is wrong will right itself with time", "english_def": "", "example": "", "notes": "", "date_added": "6/25", "mastery": "new", "year": 2021, "pos": "expression"}, {"id": 191, "word": "Schizophrenia", "meaning_ja": "統合失調症", "english_def": "", "example": "", "notes": "", "date_added": "6/26", "mastery": "new", "year": 2021, "pos": "noun"}, {"id": 192, "word": "Pro bono", "meaning_ja": "公共慈善活動", "english_def": "", "example": "ラテン語が起源 - Pro (For) Bono (Good) Public", "notes": "", "date_added": "7/4", "mastery": "new", "year": 2021, "pos": "expression"}, {"id": 193, "word": "Trump", "meaning_ja": "切り札を出す", "english_def": "", "example": "You have to trump somebody to resolve issues as quickly as possible", "notes": "", "date_added": "7/4", "mastery": "new", "year": 2021, "pos": "noun"}, {"id": 194, "word": "Set ST apart", "meaning_ja": "STを差別化する", "english_def": "", "example": "What sets AWS apart?", "notes": "", "date_added": "7/4", "mastery": "new", "year": 2021, "pos": "phrasal_verb"}, {"id": 195, "word": "Velocity", "meaning_ja": "速度", "english_def": "", "example": "High velocity - 高速", "notes": "", "date_added": "7/7", "mastery": "new", "year": 2021, "pos": "noun"}, {"id": 196, "word": "Be after", "meaning_ja": "狙う、追跡する", "english_def": "", "example": "If you're after some of the best coffee", "notes": "", "date_added": "7/7", "mastery": "new", "year": 2021, "pos": "expression"}, {"id": 197, "word": "For god's sake", "meaning_ja": "ひどい、あきれた、どうか頼むから", "english_def": "", "example": "", "notes": "", "date_added": "7/11", "mastery": "new", "year": 2021, "pos": "expression"}, {"id": 198, "word": "Alleviate", "meaning_ja": "を和らげる、緩和する", "english_def": "", "example": "", "notes": "", "date_added": "7/13", "mastery": "new", "year": 2021, "pos": "verb"}, {"id": 199, "word": "Epitome", "meaning_ja": "典型", "english_def": "", "example": "He was the epitome of evil", "notes": "", "date_added": "7/13", "mastery": "new", "year": 2021, "pos": "noun"}, {"id": 200, "word": "Watercooler", "meaning_ja": "おしゃべり、立ち話、井戸端会議", "english_def": "", "example": "", "notes": "", "date_added": "7/13", "mastery": "new", "year": 2021, "pos": "noun"}, {"id": 201, "word": "Overhead (UC)", "meaning_ja": "追加の作業、諸経費", "english_def": "", "example": "", "notes": "", "date_added": "7/14", "mastery": "new", "year": 2021, "pos": "noun"}, {"id": 202, "word": "Repurpose", "meaning_ja": "目的を変えて再利用する", "english_def": "", "example": "Ask here is to repurpose your next 1:1", "notes": "", "date_added": "7/14", "mastery": "new", "year": 2021, "pos": "noun"}, {"id": 203, "word": "Dwell", "meaning_ja": "住む、居住する", "english_def": "", "example": "engineers with dwell time over 18 months in role", "notes": "", "date_added": "7/15", "mastery": "new", "year": 2021, "pos": "noun"}, {"id": 204, "word": "Housekeeping", "meaning_ja": "事務連絡、連絡事項、基本的な注意事項", "english_def": "", "example": "", "notes": "", "date_added": "7/15", "mastery": "new", "year": 2021, "pos": "noun"}, {"id": 205, "word": "Gauge", "meaning_ja": "を測定する、評価する、判断する", "english_def": "", "example": "gauge feedback on ST", "notes": "", "date_added": "7/15", "mastery": "new", "year": 2021, "pos": "noun"}, {"id": 206, "word": "Cohort", "meaning_ja": "a group of people with a shared characteristic", "english_def": "", "example": "", "notes": "", "date_added": "7/15", "mastery": "new", "year": 2021, "pos": "noun"}, {"id": 207, "word": "Elevator pitch", "meaning_ja": "簡潔な説明", "english_def": "", "example": "語源: エレベータ内で顧客に偶然会ったとき、短い時間に自分の会社を説明する", "notes": "", "date_added": "7/15", "mastery": "new", "year": 2021, "pos": "expression"}, {"id": 208, "word": "Hibernate", "meaning_ja": "休眠させる", "english_def": "", "example": "", "notes": "", "date_added": "7/17", "mastery": "new", "year": 2021, "pos": "verb"}, {"id": 209, "word": "Sugarcoated", "meaning_ja": "耳障りが良い、汚い部分を隠した", "english_def": "", "example": "", "notes": "", "date_added": "7/20", "mastery": "new", "year": 2021, "pos": "noun"}, {"id": 210, "word": "Throttle", "meaning_ja": "を抑制する、制限する", "english_def": "", "example": "", "notes": "", "date_added": "7/21", "mastery": "new", "year": 2021, "pos": "noun"}, {"id": 211, "word": "Resonate", "meaning_ja": "共鳴する/させる、反響する/させる", "english_def": "", "example": "", "notes": "", "date_added": "7/25", "mastery": "new", "year": 2021, "pos": "verb"}, {"id": 212, "word": "Dictate", "meaning_ja": "を指示する、命令する、決定する", "english_def": "", "example": "", "notes": "", "date_added": "7/26", "mastery": "new", "year": 2021, "pos": "verb"}, {"id": 213, "word": "Farmed", "meaning_ja": "養殖の/された", "english_def": "", "example": "", "notes": "", "date_added": "7/26", "mastery": "new", "year": 2021, "pos": "noun"}, {"id": 214, "word": "Trajectory", "meaning_ja": "曲線、軌道、軌跡", "english_def": "", "example": "I can tell he's in a right trajectory", "notes": "", "date_added": "7/27", "mastery": "new", "year": 2021, "pos": "adjective"}, {"id": 215, "word": "Aggravate", "meaning_ja": "を悪化させる、荒立てる", "english_def": "", "example": "", "notes": "", "date_added": "7/29", "mastery": "new", "year": 2021, "pos": "verb"}, {"id": 216, "word": "Deprive SO of ST", "meaning_ja": "SOからSTを取り上げる、奪う", "english_def": "", "example": "", "notes": "", "date_added": "7/30", "mastery": "new", "year": 2021, "pos": "verb"}, {"id": 217, "word": "Surface ST (verb)", "meaning_ja": "アイデアなどを表面に出す", "english_def": "", "example": "Surface an idea", "notes": "", "date_added": "8/3", "mastery": "new", "year": 2021, "pos": "verb"}, {"id": 218, "word": "Apprehensive", "meaning_ja": "心配している、不安な", "english_def": "", "example": "Managers are a bit apprehensive about what format we need to follow", "notes": "", "date_added": "8/3", "mastery": "new", "year": 2021, "pos": "adjective"}, {"id": 219, "word": "Double down", "meaning_ja": "さらに力を入れる、強化する", "english_def": "", "example": "Day 1 culture requires you to double down", "notes": "", "date_added": "8/19", "mastery": "new", "year": 2021, "pos": "expression"}, {"id": 220, "word": "Glass Cliff", "meaning_ja": "ガラスの崖 - 女性が危機的状況でリーダーに昇進しやすい現象", "english_def": "", "example": "", "notes": "", "date_added": "8/25", "mastery": "new", "year": 2021, "pos": "expression"}, {"id": 221, "word": "Alumni", "meaning_ja": "卒業生", "english_def": "", "example": "", "notes": "", "date_added": "8/26", "mastery": "new", "year": 2021, "pos": "noun"}, {"id": 222, "word": "Deflect", "meaning_ja": "をそらす、はじく", "english_def": "", "example": "", "notes": "", "date_added": "8/26", "mastery": "new", "year": 2021, "pos": "noun"}, {"id": 223, "word": "The devil's in the details", "meaning_ja": "細かいところに落とし穴がある", "english_def": "", "example": "", "notes": "", "date_added": "8/27", "mastery": "new", "year": 2021, "pos": "expression"}, {"id": 224, "word": "Heterogeneous", "meaning_ja": "異種の、異質な", "english_def": "", "example": "", "notes": "", "date_added": "8/27", "mastery": "new", "year": 2021, "pos": "adjective"}, {"id": 225, "word": "Carnage", "meaning_ja": "大量殺人、大虐殺", "english_def": "", "example": "", "notes": "", "date_added": "8/29", "mastery": "new", "year": 2021, "pos": "noun"}, {"id": 226, "word": "Fill SO in (with ST)", "meaning_ja": "SOを(STで)補足して話に追いつかせる", "english_def": "", "example": "", "notes": "", "date_added": "8/29", "mastery": "new", "year": 2021, "pos": "phrasal_verb"}, {"id": 227, "word": "Skew", "meaning_ja": "を歪める、歪曲する", "english_def": "", "example": "It can skew the data", "notes": "", "date_added": "9/19", "mastery": "new", "year": 2021, "pos": "noun"}, {"id": 228, "word": "Intrinsic", "meaning_ja": "内因的な、内からの", "english_def": "", "example": "Intrinsic motivation", "notes": "", "date_added": "9/21", "mastery": "new", "year": 2021, "pos": "adjective"}, {"id": 229, "word": "Extrinsic", "meaning_ja": "外因的な、外からの", "english_def": "", "example": "Extrinsic motivation", "notes": "", "date_added": "9/21", "mastery": "new", "year": 2021, "pos": "adjective"}, {"id": 230, "word": "Joke aside", "meaning_ja": "冗談はさておき", "english_def": "", "example": "", "notes": "", "date_added": "9/26", "mastery": "new", "year": 2021, "pos": "expression"}, {"id": 231, "word": "Status quo", "meaning_ja": "現状(維持)", "english_def": "", "example": "", "notes": "", "date_added": "9/30", "mastery": "new", "year": 2021, "pos": "expression"}, {"id": 232, "word": "Counterproductive", "meaning_ja": "逆効果の", "english_def": "", "example": "", "notes": "", "date_added": "10/5", "mastery": "new", "year": 2021, "pos": "adjective"}, {"id": 233, "word": "Counterintuitive", "meaning_ja": "直感に反する", "english_def": "", "example": "", "notes": "", "date_added": "11/2", "mastery": "new", "year": 2021, "pos": "adjective"}, {"id": 234, "word": "Catalog ST (verb)", "meaning_ja": "STをリストとしてまとめる、カテゴリー分けする", "english_def": "", "example": "", "notes": "", "date_added": "11/9", "mastery": "new", "year": 2021, "pos": "verb"}, {"id": 235, "word": "Axis", "meaning_ja": "軸", "english_def": "", "example": "X axis and Y axis", "notes": "", "date_added": "11/16", "mastery": "new", "year": 2021, "pos": "noun"}, {"id": 236, "word": "Punitive", "meaning_ja": "懲罰的な、過酷な", "english_def": "", "example": "", "notes": "", "date_added": "11/19", "mastery": "new", "year": 2021, "pos": "adjective"}, {"id": 237, "word": "Factor in ST", "meaning_ja": "STを考慮に入れる", "english_def": "", "example": "", "notes": "", "date_added": "11/24", "mastery": "new", "year": 2021, "pos": "phrasal_verb"}, {"id": 238, "word": "Rapport", "meaning_ja": "相互理解、相互信頼", "english_def": "", "example": "Build rapport and trust", "notes": "", "date_added": "11/26", "mastery": "new", "year": 2021, "pos": "noun"}, {"id": 239, "word": "I know for a fact that SV", "meaning_ja": "(That以下)を事実として知っている", "english_def": "", "example": "", "notes": "", "date_added": "12/20", "mastery": "new", "year": 2021, "pos": "expression"}, {"id": 240, "word": "Cut to the chase", "meaning_ja": "本題に入る", "english_def": "", "example": "", "notes": "", "date_added": "12/25", "mastery": "new", "year": 2021, "pos": "phrasal_verb"}, {"id": 241, "word": "Fall on someone's sword", "meaning_ja": "誰かの代わりに責任を負う", "english_def": "", "example": "", "notes": "", "date_added": "12/25", "mastery": "new", "year": 2021, "pos": "expression"}, {"id": 242, "word": "Grudge", "meaning_ja": "根深い恨み", "english_def": "", "example": "Grudgeの方がresentmentより強いニュアンス", "notes": "", "date_added": "12/25", "mastery": "new", "year": 2021, "pos": "noun"}, {"id": 243, "word": "Agnostic", "meaning_ja": "神の存在を否定しない無宗教者(=不可知論者)", "english_def": "", "example": "", "notes": "atheist - 神の存在を否定する人", "date_added": "1/5", "mastery": "new", "year": 2020, "pos": "adjective"}, {"id": 244, "word": "Incentivize", "meaning_ja": "(何かしらのincentiveでもって) 促す、動機付けする", "english_def": "", "example": "I was incentivized by the reward", "notes": "", "date_added": "1/6", "mastery": "new", "year": 2020, "pos": "verb"}, {"id": 245, "word": "Call on SO for ST", "meaning_ja": "STをSOに求める、要請する", "english_def": "", "example": "You have to call on them for their input", "notes": "", "date_added": "1/6", "mastery": "new", "year": 2020, "pos": "phrasal_verb"}, {"id": 246, "word": "Auto-pilot mode", "meaning_ja": "自動運転", "english_def": "", "example": "You have to delegate in order to be in the auto-pilot mode", "notes": "", "date_added": "1/7", "mastery": "new", "year": 2020, "pos": "expression"}, {"id": 247, "word": "Unconditional support", "meaning_ja": "無条件のサポート", "english_def": "", "example": "", "notes": "", "date_added": "1/8", "mastery": "new", "year": 2020, "pos": "expression"}, {"id": 248, "word": "Consensual", "meaning_ja": "同意による", "english_def": "", "example": "Cultures that fall as egalitarian believe in consensual decision making.", "notes": "", "date_added": "1/10", "mastery": "new", "year": 2020, "pos": "adjective"}, {"id": 249, "word": "Dynamic", "meaning_ja": "流動的な、活動的な", "english_def": "", "example": "The world is dynamic and things are changing.", "notes": "", "date_added": "1/11", "mastery": "new", "year": 2020, "pos": "adjective"}, {"id": 250, "word": "Lexicon", "meaning_ja": "語彙、ボキャブラリー", "english_def": "", "example": "In today's global business lexicon, the word consensus has a positive ring.", "notes": "", "date_added": "1/11", "mastery": "new", "year": 2020, "pos": "noun"}, {"id": 251, "word": "Epitomize", "meaning_ja": "を代表する", "english_def": "", "example": "The Japanese ringi system epitomizes a culture where decisions take a long time.", "notes": "", "date_added": "1/11", "mastery": "new", "year": 2020, "pos": "verb"}, {"id": 252, "word": "Interplay (C)", "meaning_ja": "相互作用", "english_def": "", "example": "There is a stronger interplay between affective and cognitive trust.", "notes": "", "date_added": "1/11", "mastery": "new", "year": 2020, "pos": "noun"}, {"id": 253, "word": "Be taken aback", "meaning_ja": "驚く、衝撃を受ける", "english_def": "", "example": "", "notes": "", "date_added": "1/11", "mastery": "new", "year": 2020, "pos": "expression"}, {"id": 254, "word": "Misstep", "meaning_ja": "過失", "english_def": "", "example": "Once an affective relationship is established, the forgiveness for any cultural missteps you make comes a lot easier.", "notes": "", "date_added": "1/11", "mastery": "new", "year": 2020, "pos": "noun"}, {"id": 255, "word": "Superficial", "meaning_ja": "表面的な", "english_def": "", "example": "", "notes": "", "date_added": "1/12", "mastery": "new", "year": 2020, "pos": "adjective"}, {"id": 256, "word": "Arson", "meaning_ja": "放火", "english_def": "", "example": "Arson fire, Arson death", "notes": "", "date_added": "1/13", "mastery": "new", "year": 2020, "pos": "noun"}, {"id": 257, "word": "Go viral", "meaning_ja": "急速に広まる、伝搬する", "english_def": "", "example": "", "notes": "", "date_added": "1/14", "mastery": "new", "year": 2020, "pos": "expression"}, {"id": 258, "word": "Respiratory", "meaning_ja": "呼吸器系", "english_def": "", "example": "People living in an area with hazardous air quality are advised to limit their time outdoors.", "notes": "", "date_added": "1/14", "mastery": "new", "year": 2020, "pos": "adjective"}, {"id": 259, "word": "Huddle", "meaning_ja": "身を寄せ合う", "english_def": "", "example": "The survivors huddled together to keep warm", "notes": "", "date_added": "1/14", "mastery": "new", "year": 2020, "pos": "noun"}, {"id": 260, "word": "Burden (C)", "meaning_ja": "お荷物、厄介、負荷", "english_def": "", "example": "This year we will have one engineer shadowing to ensure less of a burden", "notes": "", "date_added": "1/15", "mastery": "new", "year": 2020, "pos": "noun"}, {"id": 261, "word": "Woo", "meaning_ja": "に求愛する", "english_def": "", "example": "Jeff Bezos tries to woo India", "notes": "", "date_added": "1/15", "mastery": "new", "year": 2020, "pos": "noun"}, {"id": 262, "word": "Stem from", "meaning_ja": "から由来する、生じる", "english_def": "", "example": "Many Japanese use drinking to forge connections, stemming from the Japanese verb nomu.", "notes": "", "date_added": "1/16", "mastery": "new", "year": 2020, "pos": "expression"}, {"id": 263, "word": "Do wonders", "meaning_ja": "驚くべき効果がある", "english_def": "", "example": "Alcohol is not the only way to build a business relationship. A round of karaoke can do wonders.", "notes": "", "date_added": "1/16", "mastery": "new", "year": 2020, "pos": "expression"}, {"id": 264, "word": "Chastise", "meaning_ja": "を正す、直す、矯正する", "english_def": "", "example": "He chastised Sen. Martha McSally for going after his colleague", "notes": "", "date_added": "1/17", "mastery": "new", "year": 2020, "pos": "verb"}, {"id": 265, "word": "Cherish", "meaning_ja": "愛おしむ、愛でる、大切にする", "english_def": "", "example": "", "notes": "", "date_added": "1/18", "mastery": "new", "year": 2020, "pos": "adjective"}, {"id": 266, "word": "Brolly", "meaning_ja": "傘", "english_def": "", "example": "Don't forget to pack a brolly today", "notes": "", "date_added": "1/18", "mastery": "new", "year": 2020, "pos": "adverb"}, {"id": 267, "word": "Be across ST", "meaning_ja": "に精通する、を知っている", "english_def": "", "example": "", "notes": "", "date_added": "1/19", "mastery": "new", "year": 2020, "pos": "verb"}, {"id": 268, "word": "Keep ST handy", "meaning_ja": "を手元に置く", "english_def": "", "example": "", "notes": "", "date_added": "1/20", "mastery": "new", "year": 2020, "pos": "verb"}, {"id": 269, "word": "Run rate", "meaning_ja": "ランレート（直近の実績値の傾向がそのまま続くと仮定した場合の将来予測値）", "english_def": "", "example": "", "notes": "", "date_added": "1/21", "mastery": "new", "year": 2020, "pos": "expression"}, {"id": 270, "word": "Fatality rate", "meaning_ja": "致死率", "english_def": "", "example": "The fatality rate of Wuhan coronavirus is standing at 1.6%", "notes": "", "date_added": "1/22", "mastery": "new", "year": 2020, "pos": "expression"}, {"id": 271, "word": "Plateau", "meaning_ja": "台地、高地、高台", "english_def": "", "example": "", "notes": "", "date_added": "1/23", "mastery": "new", "year": 2020, "pos": "noun"}, {"id": 272, "word": "Apprised", "meaning_ja": "知らされている", "english_def": "", "example": "Keep me apprised", "notes": "", "date_added": "1/23", "mastery": "new", "year": 2020, "pos": "noun"}, {"id": 273, "word": "Intake", "meaning_ja": "摂取する、取り込む", "english_def": "", "example": "", "notes": "", "date_added": "1/23", "mastery": "new", "year": 2020, "pos": "noun"}, {"id": 274, "word": "Adultery", "meaning_ja": "不倫、婚外性行", "english_def": "", "example": "", "notes": "", "date_added": "1/27", "mastery": "new", "year": 2020, "pos": "noun"}, {"id": 275, "word": "Persona", "meaning_ja": "", "english_def": "", "example": "", "notes": "", "date_added": "1/27", "mastery": "new", "year": 2020, "pos": "noun"}, {"id": 276, "word": "A sound argument", "meaning_ja": "正論", "english_def": "", "example": "", "notes": "", "date_added": "1/27", "mastery": "new", "year": 2020, "pos": "expression"}, {"id": 277, "word": "Reiterate", "meaning_ja": "繰り返す、再度述べる", "english_def": "", "example": "", "notes": "", "date_added": "1/28", "mastery": "new", "year": 2020, "pos": "verb"}, {"id": 278, "word": "Hygiene (non-C)", "meaning_ja": "衛生状態", "english_def": "", "example": "Have poor hygiene (衛生状態が悪い)", "notes": "", "date_added": "1/28", "mastery": "new", "year": 2020, "pos": "noun"}, {"id": 279, "word": "Lost in translation", "meaning_ja": "翻訳で意味が失われる", "english_def": "", "example": "", "notes": "", "date_added": "1/29", "mastery": "new", "year": 2020, "pos": "expression"}, {"id": 280, "word": "Bustle", "meaning_ja": "精力的に忙しくする", "english_def": "", "example": "", "notes": "", "date_added": "1/30", "mastery": "new", "year": 2020, "pos": "noun"}, {"id": 281, "word": "As far as X is concerned", "meaning_ja": "Xに関する限り", "english_def": "", "example": "As far as I'm concerned - 私の考えとしては", "notes": "", "date_added": "1/30", "mastery": "new", "year": 2020, "pos": "expression"}, {"id": 282, "word": "Sub-optimal", "meaning_ja": "最適ではない", "english_def": "", "example": "This is sub-optimal behavior but would achieve the desired outcome", "notes": "", "date_added": "1/31", "mastery": "new", "year": 2020, "pos": "adjective"}, {"id": 283, "word": "My 2 cents", "meaning_ja": "私のちょっとした意見", "english_def": "", "example": "Here is my 2 cents", "notes": "", "date_added": "1/31", "mastery": "new", "year": 2020, "pos": "expression"}, {"id": 284, "word": "Cardiac arrest (C)", "meaning_ja": "心肺停止", "english_def": "", "example": "Render first aid treatment when you find someone suffering a cardiac arrest", "notes": "", "date_added": "2/1", "mastery": "new", "year": 2020, "pos": "noun"}, {"id": 285, "word": "Render", "meaning_ja": "を与える、を表す、人や物をある状態にする", "english_def": "", "example": "", "notes": "", "date_added": "2/1", "mastery": "new", "year": 2020, "pos": "noun"}, {"id": 286, "word": "Implications", "meaning_ja": "引き起こされるだろう結果、意味合い", "english_def": "", "example": "Understanding billing implications is quite important", "notes": "", "date_added": "2/1", "mastery": "new", "year": 2020, "pos": "noun"}, {"id": 287, "word": "Leverage", "meaning_ja": "を活用する", "english_def": "", "example": "Understand how to leverage CS for billing and account inquiries", "notes": "", "date_added": "2/1", "mastery": "new", "year": 2020, "pos": "noun"}, {"id": 288, "word": "Subtle (Adj)", "meaning_ja": "微妙な、繊細なニュアンス", "english_def": "", "example": "", "notes": "", "date_added": "2/1", "mastery": "new", "year": 2020, "pos": "adjective"}, {"id": 289, "word": "Keep you company", "meaning_ja": "あなたについて行く", "english_def": "", "example": "I'll keep you company", "notes": "", "date_added": "2/1", "mastery": "new", "year": 2020, "pos": "expression"}, {"id": 290, "word": "Manslaughter", "meaning_ja": "故殺(意図せず結果的に殺してしまうこと)、過失致死", "english_def": "", "example": "A 29-year-old man has been charged with 20 offenses including manslaughter", "notes": "", "date_added": "2/1", "mastery": "new", "year": 2020, "pos": "noun"}, {"id": 291, "word": "Legislature", "meaning_ja": "立法機関", "english_def": "", "example": "The current Diet of Japan was established in 1946.", "notes": "", "date_added": "2/1", "mastery": "new", "year": 2020, "pos": "noun"}, {"id": 292, "word": "Summon", "meaning_ja": "を召喚する、を呼び出す", "english_def": "", "example": "Summon a lawyer", "notes": "", "date_added": "2/5", "mastery": "new", "year": 2020, "pos": "noun"}, {"id": 293, "word": "Fireside chat", "meaning_ja": "落ち着いた雰囲気で楽しむ会話", "english_def": "", "example": "", "notes": "", "date_added": "2/5", "mastery": "new", "year": 2020, "pos": "expression"}, {"id": 294, "word": "Stigma", "meaning_ja": "汚点", "english_def": "", "example": "", "notes": "", "date_added": "2/5", "mastery": "new", "year": 2020, "pos": "noun"}, {"id": 295, "word": "Hard-earned (adj)", "meaning_ja": "努力して得た", "english_def": "", "example": "", "notes": "", "date_added": "2/5", "mastery": "new", "year": 2020, "pos": "adjective"}, {"id": 296, "word": "Upskill", "meaning_ja": "スキルをあげる", "english_def": "", "example": "", "notes": "", "date_added": "2/13", "mastery": "new", "year": 2020, "pos": "noun"}, {"id": 297, "word": "Be deprived of SO/ST", "meaning_ja": "STやSOを奪われる", "english_def": "", "example": "The actress was deprived of any chance to appear on television", "notes": "", "date_added": "2/16", "mastery": "new", "year": 2020, "pos": "verb"}, {"id": 298, "word": "Monday Blues", "meaning_ja": "月曜日に気乗りしない状態", "english_def": "", "example": "", "notes": "", "date_added": "2/17", "mastery": "new", "year": 2020, "pos": "expression"}, {"id": 299, "word": "Axe", "meaning_ja": "をやめる、終了する", "english_def": "", "example": "About 600 Holden employees will lose their jobs after parent company announced it would axe the iconic Australian car brand.", "notes": "", "date_added": "2/17", "mastery": "new", "year": 2020, "pos": "noun"}, {"id": 300, "word": "Terrible twos", "meaning_ja": "イヤイヤ期", "english_def": "", "example": "", "notes": "", "date_added": "2/17", "mastery": "new", "year": 2020, "pos": "expression"}, {"id": 301, "word": "Substantial (adj)", "meaning_ja": "かなりの、相当な", "english_def": "", "example": "A substantial amount of x", "notes": "", "date_added": "2/19", "mastery": "new", "year": 2020, "pos": "adjective"}, {"id": 302, "word": "Have a bun in the oven", "meaning_ja": "妊娠する", "english_def": "", "example": "", "notes": "", "date_added": "2/24", "mastery": "new", "year": 2020, "pos": "expression"}, {"id": 303, "word": "Over the moon (adj)", "meaning_ja": "大喜びしている", "english_def": "", "example": "", "notes": "", "date_added": "2/24", "mastery": "new", "year": 2020, "pos": "adjective"}, {"id": 304, "word": "Talk SO through ST", "meaning_ja": "STについてSOに細かく説明する", "english_def": "", "example": "", "notes": "", "date_added": "2/28", "mastery": "new", "year": 2020, "pos": "phrasal_verb"}, {"id": 305, "word": "Be on top of ST", "meaning_ja": "STに責任を持って自発的に行動する", "english_def": "", "example": "", "notes": "", "date_added": "3/4", "mastery": "new", "year": 2020, "pos": "phrasal_verb"}, {"id": 306, "word": "Misconduct", "meaning_ja": "不正行為", "english_def": "", "example": "Financial misconduct", "notes": "", "date_added": "3/4", "mastery": "new", "year": 2020, "pos": "noun"}, {"id": 307, "word": "Deter SO from", "meaning_ja": "SOが何かするのを阻止する", "english_def": "", "example": "", "notes": "", "date_added": "3/13", "mastery": "new", "year": 2020, "pos": "phrasal_verb"}, {"id": 308, "word": "Nosy (Adj)", "meaning_ja": "詮索する様、首を突っ込みがち", "english_def": "", "example": "", "notes": "", "date_added": "3/15", "mastery": "new", "year": 2020, "pos": "adjective"}, {"id": 309, "word": "Cabin fever", "meaning_ja": "長期間閉じ込められることによる強い閉塞感や焦燥感", "english_def": "", "example": "", "notes": "", "date_added": "3/17", "mastery": "new", "year": 2020, "pos": "expression"}, {"id": 310, "word": "Anarchy", "meaning_ja": "無秩序、無政府状態", "english_def": "", "example": "", "notes": "", "date_added": "3/17", "mastery": "new", "year": 2020, "pos": "noun"}, {"id": 311, "word": "Ahead of the curve", "meaning_ja": "先手を打って、先回りして、先取りして", "english_def": "", "example": "", "notes": "", "date_added": "3/19", "mastery": "new", "year": 2020, "pos": "expression"}, {"id": 312, "word": "Prejudice", "meaning_ja": "先入観、偏見", "english_def": "", "example": "", "notes": "", "date_added": "3/20", "mastery": "new", "year": 2020, "pos": "noun"}, {"id": 313, "word": "Unprecedented", "meaning_ja": "前例のない、異例の、前代未聞", "english_def": "", "example": "", "notes": "", "date_added": "3/21", "mastery": "new", "year": 2020, "pos": "noun"}, {"id": 314, "word": "Be blindsided by ST", "meaning_ja": "STによって不意打ちをくらう", "english_def": "", "example": "", "notes": "", "date_added": "3/21", "mastery": "new", "year": 2020, "pos": "phrasal_verb"}, {"id": 315, "word": "Radius", "meaning_ja": "半径", "english_def": "", "example": "Delivery available within 500m radius", "notes": "", "date_added": "3/24", "mastery": "new", "year": 2020, "pos": "noun"}, {"id": 316, "word": "Evict", "meaning_ja": "を追い出す", "english_def": "", "example": "Tenants cannot be evicted because of the economic fallout from Coronavirus Crisis.", "notes": "", "date_added": "3/24", "mastery": "new", "year": 2020, "pos": "noun"}, {"id": 317, "word": "Resemble SO", "meaning_ja": "SOと似ている", "english_def": "", "example": "I'm becoming to resemble my mother", "notes": "", "date_added": "3/24", "mastery": "new", "year": 2020, "pos": "verb"}, {"id": 318, "word": "Temperamental", "meaning_ja": "気まぐれな", "english_def": "", "example": "The internet is becoming temperamental", "notes": "", "date_added": "3/29", "mastery": "new", "year": 2020, "pos": "adjective"}, {"id": 319, "word": "Cadence", "meaning_ja": "周期、リズム", "english_def": "", "example": "We need to decide the cadence of the meeting.", "notes": "", "date_added": "4/2", "mastery": "new", "year": 2020, "pos": "noun"}, {"id": 320, "word": "In light of", "meaning_ja": "を考慮すると", "english_def": "", "example": "(= considering or given)", "notes": "", "date_added": "4/2", "mastery": "new", "year": 2020, "pos": "expression"}, {"id": 321, "word": "Lift", "meaning_ja": "解除する", "english_def": "", "example": "Authorities lifted a ban on outbound travel from Wuhan", "notes": "", "date_added": "4/8", "mastery": "new", "year": 2020, "pos": "noun"}, {"id": 322, "word": "Surreal", "meaning_ja": "非現実的な、夢のような", "english_def": "", "example": "", "notes": "", "date_added": "4/14", "mastery": "new", "year": 2020, "pos": "adjective"}, {"id": 323, "word": "Jurisdiction", "meaning_ja": "管轄、管轄区域", "english_def": "", "example": "", "notes": "", "date_added": "4/14", "mastery": "new", "year": 2020, "pos": "noun"}, {"id": 324, "word": "Fatality rate", "meaning_ja": "致死率", "english_def": "", "example": "", "notes": "", "date_added": "4/15", "mastery": "new", "year": 2020, "pos": "expression"}, {"id": 325, "word": "Hypertension", "meaning_ja": "高血圧症", "english_def": "", "example": "", "notes": "", "date_added": "4/15", "mastery": "new", "year": 2020, "pos": "noun"}, {"id": 326, "word": "Effing", "meaning_ja": "Fuckingの婉曲語", "english_def": "", "example": "That's effing awful.", "notes": "", "date_added": "4/25", "mastery": "new", "year": 2020, "pos": "noun"}, {"id": 327, "word": "Laid-back", "meaning_ja": "くつろいだ、リラックスした", "english_def": "", "example": "", "notes": "", "date_added": "5/3", "mastery": "new", "year": 2020, "pos": "noun"}, {"id": 328, "word": "Reprimand (N & V)", "meaning_ja": "叱責する、責める、懲戒する", "english_def": "", "example": "", "notes": "", "date_added": "5/5", "mastery": "new", "year": 2020, "pos": "noun"}, {"id": 329, "word": "Eradicate", "meaning_ja": "を殲滅する、根絶やしにする", "english_def": "", "example": "", "notes": "", "date_added": "5/9", "mastery": "new", "year": 2020, "pos": "verb"}, {"id": 330, "word": "Defy", "meaning_ja": "に逆らう、従わない", "english_def": "", "example": "", "notes": "", "date_added": "5/14", "mastery": "new", "year": 2020, "pos": "noun"}, {"id": 331, "word": "Attribute", "meaning_ja": "STに帰する、STのせいにする", "english_def": "", "example": "", "notes": "", "date_added": "5/14", "mastery": "new", "year": 2020, "pos": "noun"}, {"id": 332, "word": "Be attributed to ST", "meaning_ja": "STが原因と考えられる", "english_def": "", "example": "Attributed mainly to, partially to, solely to", "notes": "", "date_added": "5/14", "mastery": "new", "year": 2020, "pos": "phrasal_verb"}, {"id": 333, "word": "Intimidate", "meaning_ja": "を怯えさせる", "english_def": "", "example": "It was intimidating.", "notes": "", "date_added": "5/14", "mastery": "new", "year": 2020, "pos": "verb"}, {"id": 334, "word": "Stand out", "meaning_ja": "目立つ、卓越する、際立つ", "english_def": "", "example": "", "notes": "", "date_added": "5/17", "mastery": "new", "year": 2020, "pos": "expression"}, {"id": 335, "word": "The edge goes to SO/ST", "meaning_ja": "SO/STに軍配が", "english_def": "", "example": "", "notes": "", "date_added": "5/25", "mastery": "new", "year": 2020, "pos": "phrasal_verb"}, {"id": 336, "word": "Rein in ST", "meaning_ja": "STをとめる、抑制する", "english_def": "", "example": "Rein (n) = 手綱", "notes": "", "date_added": "5/29", "mastery": "new", "year": 2020, "pos": "phrasal_verb"}, {"id": 337, "word": "Resilience", "meaning_ja": "柔軟性、耐性、回復力", "english_def": "", "example": "", "notes": "", "date_added": "6/1", "mastery": "new", "year": 2020, "pos": "noun"}, {"id": 338, "word": "In turn", "meaning_ja": "順番に", "english_def": "", "example": "(= One by one, in turn)", "notes": "", "date_added": "6/4", "mastery": "new", "year": 2020, "pos": "expression"}, {"id": 339, "word": "Dissuade SO from", "meaning_ja": "説得によってやめさせる", "english_def": "", "example": "", "notes": "", "date_added": "6/8", "mastery": "new", "year": 2020, "pos": "phrasal_verb"}, {"id": 340, "word": "Tangent", "meaning_ja": "話がずれた", "english_def": "", "example": "Go off on a tangent (話がずれる)", "notes": "", "date_added": "6/12", "mastery": "new", "year": 2020, "pos": "adjective"}, {"id": 341, "word": "Tangible", "meaning_ja": "目に見える、具体的な", "english_def": "", "example": "(=Visible)", "notes": "", "date_added": "6/12", "mastery": "new", "year": 2020, "pos": "adjective"}, {"id": 342, "word": "Double edged sword", "meaning_ja": "諸刃の剣", "english_def": "", "example": "", "notes": "", "date_added": "6/19", "mastery": "new", "year": 2020, "pos": "expression"}, {"id": 343, "word": "Bonanza", "meaning_ja": "大当たり、大儲け、金の卵", "english_def": "", "example": "It was a perfect combination for a bonanza of new day traders", "notes": "", "date_added": "6/27", "mastery": "new", "year": 2020, "pos": "noun"}, {"id": 344, "word": "FOMO (fear of missing out)", "meaning_ja": "取り残される恐怖心 = 同調圧力", "english_def": "", "example": "", "notes": "", "date_added": "7/4", "mastery": "new", "year": 2020, "pos": "abbreviation"}, {"id": 345, "word": "Get around to ST", "meaning_ja": "STにようやく取り掛かる", "english_def": "", "example": "", "notes": "", "date_added": "7/8", "mastery": "new", "year": 2020, "pos": "phrasal_verb"}, {"id": 346, "word": "Dynamic", "meaning_ja": "変化する、流動的な", "english_def": "", "example": "", "notes": "", "date_added": "7/11", "mastery": "new", "year": 2020, "pos": "adjective"}, {"id": 347, "word": "Verbatim", "meaning_ja": "一語一句同じように、逐語的に", "english_def": "", "example": "", "notes": "", "date_added": "7/15", "mastery": "new", "year": 2020, "pos": "noun"}, {"id": 348, "word": "Herd immunity", "meaning_ja": "集団免疫", "english_def": "", "example": "", "notes": "", "date_added": "7/16", "mastery": "new", "year": 2020, "pos": "expression"}, {"id": 349, "word": "Adverse effect", "meaning_ja": "悪影響", "english_def": "", "example": "With no adverse effects", "notes": "", "date_added": "7/18", "mastery": "new", "year": 2020, "pos": "expression"}, {"id": 350, "word": "Attest to ST", "meaning_ja": "STを証明する", "english_def": "", "example": "", "notes": "", "date_added": "7/18", "mastery": "new", "year": 2020, "pos": "phrasal_verb"}, {"id": 351, "word": "Get hands dirty", "meaning_ja": "実際にやってみる、手を動かす", "english_def": "", "example": "", "notes": "", "date_added": "7/18", "mastery": "new", "year": 2020, "pos": "expression"}, {"id": 352, "word": "Collateral", "meaning_ja": "付随した、二次的な", "english_def": "", "example": "Collateral damage", "notes": "", "date_added": "7/18", "mastery": "new", "year": 2020, "pos": "adjective"}, {"id": 353, "word": "Upskill", "meaning_ja": "のスキルをあげる", "english_def": "", "example": "", "notes": "", "date_added": "7/19", "mastery": "new", "year": 2020, "pos": "noun"}, {"id": 354, "word": "Complacency (N)", "meaning_ja": "自己満足、独りよがり", "english_def": "", "example": "SmugよりFormal", "notes": "", "date_added": "7/19", "mastery": "new", "year": 2020, "pos": "noun"}, {"id": 355, "word": "Pillar", "meaning_ja": "柱、大黒柱、中核", "english_def": "", "example": "Kuno has become a major pillar of Mallorca", "notes": "", "date_added": "7/19", "mastery": "new", "year": 2020, "pos": "noun"}, {"id": 356, "word": "Sycophant", "meaning_ja": "ごますりな人、おべっか使い", "english_def": "", "example": "", "notes": "", "date_added": "7/19", "mastery": "new", "year": 2020, "pos": "adjective"}, {"id": 357, "word": "Tedious", "meaning_ja": "つまらない、長ったらしい", "english_def": "", "example": "DullやBoringに似ているが物やプロセスに対して使う", "notes": "", "date_added": "7/19", "mastery": "new", "year": 2020, "pos": "adjective"}, {"id": 358, "word": "Deliberately", "meaning_ja": "意図的に", "english_def": "", "example": "カジュアル: On purpose > Intentionally > Deliberately: フォーマル", "notes": "", "date_added": "7/19", "mastery": "new", "year": 2020, "pos": "adverb"}, {"id": 359, "word": "Seasoned (adj)", "meaning_ja": "経験のある、熟練した", "english_def": "", "example": "", "notes": "", "date_added": "7/22", "mastery": "new", "year": 2020, "pos": "adjective"}, {"id": 360, "word": "Token", "meaning_ja": "しるし、記念", "english_def": "", "example": "Sending flowers as a token of appreciation", "notes": "", "date_added": "7/24", "mastery": "new", "year": 2020, "pos": "noun"}, {"id": 361, "word": "Resourceful", "meaning_ja": "臨機応変な", "english_def": "", "example": "", "notes": "", "date_added": "7/24", "mastery": "new", "year": 2020, "pos": "adjective"}, {"id": 362, "word": "Take on ST", "meaning_ja": "STに取り組む(難題や困難)", "english_def": "", "example": "", "notes": "", "date_added": "7/26", "mastery": "new", "year": 2020, "pos": "phrasal_verb"}, {"id": 363, "word": "Profane (adj)", "meaning_ja": "口汚い、冒涜的な", "english_def": "", "example": "", "notes": "", "date_added": "7/27", "mastery": "new", "year": 2020, "pos": "adjective"}, {"id": 364, "word": "Leeway (UC)", "meaning_ja": "余裕", "english_def": "", "example": "Give her some leeway", "notes": "", "date_added": "7/28", "mastery": "new", "year": 2020, "pos": "noun"}, {"id": 365, "word": "Walk-through", "meaning_ja": "一つずつやってみせること、デモンストレーション", "english_def": "", "example": "", "notes": "", "date_added": "7/28", "mastery": "new", "year": 2020, "pos": "noun"}, {"id": 366, "word": "Stellar", "meaning_ja": "輝かしい、際立った、星の", "english_def": "", "example": "", "notes": "", "date_added": "7/31", "mastery": "new", "year": 2020, "pos": "noun"}, {"id": 367, "word": "Social Construct", "meaning_ja": "社会的構成概念", "english_def": "", "example": "", "notes": "", "date_added": "7/31", "mastery": "new", "year": 2020, "pos": "expression"}, {"id": 368, "word": "Quip", "meaning_ja": "冗談を言う", "english_def": "", "example": "", "notes": "", "date_added": "8/1", "mastery": "new", "year": 2020, "pos": "noun"}, {"id": 369, "word": "Subset", "meaning_ja": "小さなまとまり、部分集合", "english_def": "", "example": "Download a subset of data", "notes": "", "date_added": "8/2", "mastery": "new", "year": 2020, "pos": "noun"}, {"id": 370, "word": "Sugar-coating ST", "meaning_ja": "STの見かけを良くする", "english_def": "", "example": "", "notes": "", "date_added": "8/5", "mastery": "new", "year": 2020, "pos": "verb"}, {"id": 371, "word": "Eerie", "meaning_ja": "不気味な", "english_def": "", "example": "", "notes": "", "date_added": "8/6", "mastery": "new", "year": 2020, "pos": "noun"}, {"id": 372, "word": "Bear in mind", "meaning_ja": "STを心に留める", "english_def": "", "example": "", "notes": "", "date_added": "8/11", "mastery": "new", "year": 2020, "pos": "expression"}, {"id": 373, "word": "Get one's head around ST", "meaning_ja": "STを理解する", "english_def": "", "example": "", "notes": "", "date_added": "8/11", "mastery": "new", "year": 2020, "pos": "phrasal_verb"}, {"id": 374, "word": "Cannot see the forest for the trees", "meaning_ja": "木を見て森を見ず", "english_def": "", "example": "", "notes": "", "date_added": "8/13", "mastery": "new", "year": 2020, "pos": "expression"}, {"id": 375, "word": "Decipher ST", "meaning_ja": "STを読み解く、を解読する", "english_def": "", "example": "", "notes": "", "date_added": "8/13", "mastery": "new", "year": 2020, "pos": "verb"}, {"id": 376, "word": "By far", "meaning_ja": "ずばぬけて", "english_def": "", "example": "Speaking is by far the most important thing", "notes": "", "date_added": "8/15", "mastery": "new", "year": 2020, "pos": "expression"}, {"id": 377, "word": "Hibernate", "meaning_ja": "冬眠する/させる", "english_def": "", "example": "", "notes": "", "date_added": "8/22", "mastery": "new", "year": 2020, "pos": "verb"}, {"id": 378, "word": "Knowingly (adv)", "meaning_ja": "知りながら", "english_def": "", "example": "She knowingly bought stolen goods", "notes": "", "date_added": "8/23", "mastery": "new", "year": 2020, "pos": "adverb"}, {"id": 379, "word": "Asymptomatic", "meaning_ja": "自覚症状の無い", "english_def": "", "example": "Asymptomatic person's viral load is the same as symptomatic person's", "notes": "", "date_added": "8/26", "mastery": "new", "year": 2020, "pos": "adjective"}, {"id": 380, "word": "Echo ST", "meaning_ja": "STに同意する、を繰り返す", "english_def": "", "example": "I just wanna echo what Adam said", "notes": "", "date_added": "8/27", "mastery": "new", "year": 2020, "pos": "verb"}, {"id": 381, "word": "Decisive", "meaning_ja": "断固たる、決定的な", "english_def": "", "example": "", "notes": "", "date_added": "8/29", "mastery": "new", "year": 2020, "pos": "adjective"}, {"id": 382, "word": "Excel at ST", "meaning_ja": "STに秀でる", "english_def": "", "example": "STで目覚ましい活躍をする", "notes": "", "date_added": "8/29", "mastery": "new", "year": 2020, "pos": "phrasal_verb"}, {"id": 383, "word": "Vigilance", "meaning_ja": "警戒、用心", "english_def": "", "example": "", "notes": "", "date_added": "8/30", "mastery": "new", "year": 2020, "pos": "noun"}, {"id": 384, "word": "Blow over", "meaning_ja": "静まる、おさまる、過ぎ去る", "english_def": "", "example": "", "notes": "", "date_added": "9/2", "mastery": "new", "year": 2020, "pos": "expression"}, {"id": 385, "word": "Cliche (adj)", "meaning_ja": "決まり文句な、月並みな", "english_def": "", "example": "I know it sounds cliche", "notes": "", "date_added": "9/6", "mastery": "new", "year": 2020, "pos": "adjective"}, {"id": 386, "word": "Dexterity", "meaning_ja": "器用さ", "english_def": "", "example": "mental dexterity", "notes": "", "date_added": "9/6", "mastery": "new", "year": 2020, "pos": "noun"}, {"id": 387, "word": "In grief", "meaning_ja": "傷心中、深い哀しみの中にいる", "english_def": "", "example": "She's in grief of losing a dog", "notes": "", "date_added": "9/7", "mastery": "new", "year": 2020, "pos": "expression"}, {"id": 388, "word": "Pitfall", "meaning_ja": "落とし穴", "english_def": "", "example": "What is the common pitfall?", "notes": "", "date_added": "9/10", "mastery": "new", "year": 2020, "pos": "noun"}, {"id": 389, "word": "Vasectomy", "meaning_ja": "精管切除術(男性避妊手術)", "english_def": "", "example": "", "notes": "", "date_added": "9/19", "mastery": "new", "year": 2020, "pos": "noun"}, {"id": 390, "word": "Walk out on SO", "meaning_ja": "SOの元を去る", "english_def": "", "example": "", "notes": "", "date_added": "9/19", "mastery": "new", "year": 2020, "pos": "phrasal_verb"}, {"id": 391, "word": "Over the moon", "meaning_ja": "大喜び", "english_def": "", "example": "I'm sure you're over the moon with your family back", "notes": "", "date_added": "9/27", "mastery": "new", "year": 2020, "pos": "expression"}, {"id": 392, "word": "Obnoxious", "meaning_ja": "感じの悪い、反抗的な", "english_def": "", "example": "The note is obnoxious", "notes": "", "date_added": "10/5", "mastery": "new", "year": 2020, "pos": "adjective"}, {"id": 393, "word": "Pristine", "meaning_ja": "手付かずの、新鮮な、自然のままの", "english_def": "", "example": "Beaches are pristine", "notes": "", "date_added": "10/5", "mastery": "new", "year": 2020, "pos": "noun"}, {"id": 394, "word": "Blunt", "meaning_ja": "率直な、ストレートな、ざっくばらんな", "english_def": "", "example": "", "notes": "", "date_added": "10/7", "mastery": "new", "year": 2020, "pos": "noun"}, {"id": 395, "word": "A matter of time", "meaning_ja": "時間の問題", "english_def": "", "example": "it was just a matter of time", "notes": "", "date_added": "10/17", "mastery": "new", "year": 2020, "pos": "expression"}, {"id": 396, "word": "Paragon", "meaning_ja": "模範、手本", "english_def": "", "example": "He's a paragon of fashion", "notes": "", "date_added": "10/17", "mastery": "new", "year": 2020, "pos": "noun"}, {"id": 397, "word": "Truth be told", "meaning_ja": "実を言うと", "english_def": "", "example": "", "notes": "", "date_added": "10/24", "mastery": "new", "year": 2020, "pos": "expression"}, {"id": 398, "word": "Blueprint", "meaning_ja": "ひな形、設計図、パターン", "english_def": "", "example": "", "notes": "", "date_added": "11/3", "mastery": "new", "year": 2020, "pos": "noun"}, {"id": 399, "word": "Fasting", "meaning_ja": "断食", "english_def": "", "example": "", "notes": "", "date_added": "11/12", "mastery": "new", "year": 2020, "pos": "noun"}, {"id": 400, "word": "Sane", "meaning_ja": "正気", "english_def": "", "example": "", "notes": "", "date_added": "11/12", "mastery": "new", "year": 2020, "pos": "noun"}, {"id": 401, "word": "Hear SO out", "meaning_ja": "SOの話を最後まで注意して聞く", "english_def": "", "example": "", "notes": "", "date_added": "11/12", "mastery": "new", "year": 2020, "pos": "phrasal_verb"}, {"id": 402, "word": "Scaffolding", "meaning_ja": "足場、処刑台", "english_def": "", "example": "", "notes": "", "date_added": "11/14", "mastery": "new", "year": 2020, "pos": "noun"}, {"id": 403, "word": "Equity (vs Equality)", "meaning_ja": "公平性", "english_def": "", "example": "Equality - 同等、平等", "notes": "", "date_added": "11/14", "mastery": "new", "year": 2020, "pos": "noun"}, {"id": 404, "word": "Concur with SO", "meaning_ja": "SOに同意する", "english_def": "", "example": "Concur with you", "notes": "", "date_added": "11/20", "mastery": "new", "year": 2020, "pos": "phrasal_verb"}, {"id": 405, "word": "Run past SO", "meaning_ja": "SOに相談する、尋ねる", "english_def": "", "example": "I also have an idea to run past you", "notes": "", "date_added": "11/25", "mastery": "new", "year": 2020, "pos": "phrasal_verb"}, {"id": 406, "word": "Proposition", "meaning_ja": "提案、議案", "english_def": "", "example": "", "notes": "", "date_added": "11/27", "mastery": "new", "year": 2020, "pos": "noun"}, {"id": 407, "word": "Baseless", "meaning_ja": "事実無根の、根拠のない", "english_def": "", "example": "", "notes": "", "date_added": "11/27", "mastery": "new", "year": 2020, "pos": "noun"}, {"id": 408, "word": "Get in the way of ST", "meaning_ja": "STの邪魔をする、妨げになる", "english_def": "", "example": "What gets in the way of Diversity and Inclusion?", "notes": "", "date_added": "12/1", "mastery": "new", "year": 2020, "pos": "phrasal_verb"}, {"id": 409, "word": "Immersive", "meaning_ja": "没入感のある", "english_def": "", "example": "", "notes": "", "date_added": "12/1", "mastery": "new", "year": 2020, "pos": "adjective"}, {"id": 410, "word": "Hoax", "meaning_ja": "でっちあげ", "english_def": "", "example": "", "notes": "", "date_added": "12/21", "mastery": "new", "year": 2020, "pos": "noun"}, {"id": 411, "word": "Complications", "meaning_ja": "合併症", "english_def": "", "example": "Australian famous star died aged 82 from coronavirus complications", "notes": "", "date_added": "12/31", "mastery": "new", "year": 2020, "pos": "noun"}];
+const VALID_PIN = '1234';
+const GCID = '994940387858-2tg6ab5ukicc5ndl1atm1um1j38p3u49.apps.googleusercontent.com';
+const AUTH_EMAIL = 'shoeheyu@gmail.com';
+const ALL_YEARS = [2025, 2024, 2023, 2022, 2021, 2020];
+const POS_L = {noun:'名詞',verb:'動詞',phrasal_verb:'句動詞',adjective:'形容詞',adverb:'副詞',expression:'表現',abbreviation:'略語'};
+
+// ── AUTH ───────────────────────────────────────────────────────────────
+let pinBuf = '';
+
+function checkAuth() {
+  if (sessionStorage.getItem('va') === '1') { unlock(); return; }
+  if (GCID) {
+    document.getElementById('google-btn-wrap').style.display = 'flex';
+    document.getElementById('lock-sep').style.display = 'flex';
+    loadGSI();
+  }
+  // PIN always visible as fallback
+}
+
+function loadGSI() {
+  const s = document.createElement('script');
+  s.src = 'https://accounts.google.com/gsi/client';
+  s.async = true; s.defer = true;
+  s.onload = initGSI;
+  s.onerror = () => {}; // PIN still available
+  document.head.appendChild(s);
+}
+
+function initGSI() {
+  if (!window.google) return;
+  google.accounts.id.initialize({
+    client_id: GCID,
+    callback: onGoogleCB,
+    auto_select: true,
+    cancel_on_tap_outside: false,
+    context: 'signin'
+  });
+  google.accounts.id.renderButton(
+    document.getElementById('g-signin-btn').parentElement,
+    {theme:'outline', size:'large', width:280, text:'signin_with'}
+  );
+  google.accounts.id.prompt();
+}
+
+function startGoogleSignIn() {
+  if (window.google) google.accounts.id.prompt();
+}
+
+function onGoogleCB(resp) {
+  try {
+    const pl = JSON.parse(atob(resp.credential.split('.')[1]));
+    if (AUTH_EMAIL && pl.email !== AUTH_EMAIL) {
+      document.getElementById('lock-err').textContent = 'このアカウントはアクセスできません';
+      return;
+    }
+    sessionStorage.setItem('va','1');
+    sessionStorage.setItem('vu', pl.name || pl.email);
+    sessionStorage.setItem('vav', (pl.name||'?')[0].toUpperCase());
+    unlock();
+  } catch(e) { document.getElementById('lock-err').textContent = '認証エラー: '+e.message; }
+}
+
+function pinKey(n) {
+  if (n === null) { pinBuf = pinBuf.slice(0,-1); }
+  else if (pinBuf.length < 4) { pinBuf += String(n); }
+  for (let i=0;i<4;i++) document.getElementById('d'+i).classList.toggle('f', i<pinBuf.length);
+  if (pinBuf.length === 4) {
+    if (pinBuf === VALID_PIN) { sessionStorage.setItem('va','1'); unlock(); }
+    else { document.getElementById('lock-err').textContent = '正しくないPINです'; pinBuf=''; for(let i=0;i<4;i++)document.getElementById('d'+i).classList.remove('f'); setTimeout(()=>document.getElementById('lock-err').textContent='',1500); }
+  }
+}
+
+function unlock() {
+  document.getElementById('lock').style.display = 'none';
+  document.getElementById('app').style.display = '';
+  const name = sessionStorage.getItem('vu');
+  if (name) {
+    const av = sessionStorage.getItem('vav') || name[0].toUpperCase();
+    document.getElementById('user-badge-wrap').innerHTML =
+      `<div class="user-badge"><div class="user-av">${av}</div>${esc(name)}</div>`;
+  }
+  initApp();
+}
+
+// ── STATE ──────────────────────────────────────────────────────────────
+let prog={}, st={quizCount:10,revFilter:'all'};
+let deck=[],idx=0,flipped=false;
+let wf={year:'all',pos:'all',mastery:'all',search:'',sortNew:true};
+let pq=[];
+
+function loadSt() {
+  try{ prog=JSON.parse(localStorage.getItem('vp')||'{}'); }catch(e){}
+  try{
+    const s=JSON.parse(localStorage.getItem('vs')||'{}');
+    st={...st,...s};
+    document.getElementById('qcsel').value=st.quizCount;
+  }catch(e){}
+  try{ pq=JSON.parse(localStorage.getItem('vq')||'[]'); }catch(e){}
+}
+function savP(){ localStorage.setItem('vp',JSON.stringify(prog)); }
+function savSt(k,v){ st[k]=v; localStorage.setItem('vs',JSON.stringify(st)); }
+function savQ(){ localStorage.setItem('vq',JSON.stringify(pq)); updQUI(); }
+function gm(c){ return prog[c.id]||c.mastery||'new'; }
+
+// ── REVIEW ─────────────────────────────────────────────────────────────
+function buildDeck() {
+  const rf=st.revFilter||'all';
+  deck = rf==='all' ? [...VOCAB] : VOCAB.filter(c=>gm(c)===rf);
+  idx=0;
+  document.getElementById('pfl').textContent={all:'全て',new:'未学習',learning:'学習中',mastered:'習得済み'}[rf]||'全て';
+  showC();
+}
+function showC() {
+  if(flipped){ flipped=false; document.getElementById('card').classList.remove('flip'); }
+  document.getElementById('ca').style.display='none';
+  const t=deck.length;
+  if(!t){ document.getElementById('cword').textContent='該当なし'; document.getElementById('pt').textContent='0件'; return; }
+  const c=deck[idx];
+  document.getElementById('cword').textContent=c.word;
+  document.getElementById('cmja').textContent=c.meaning_ja||'（意味未登録）';
+  document.getElementById('cmen').textContent=c.english_def||'';
+  const ex=c.example||'',nt=c.notes||'';
+  document.getElementById('cext').textContent=ex;
+  document.getElementById('cnote').textContent=nt;
+  document.getElementById('cex').style.display=(ex||nt)?'':'none';
+  const posL=POS_L[c.pos]||c.pos||'';
+  document.getElementById('cmeta').innerHTML=
+    (c.year?`<span class="ctag">${c.year}</span>`:'') +
+    (posL?`<span class="ctag">${posL}</span>`:'');
+  document.getElementById('pt').textContent=`${idx+1} / ${t}`;
+  document.getElementById('pf').style.width=`${(idx/Math.max(1,t-1))*100}%`;
+}
+function flipC() {
+  flipped=!flipped;
+  document.getElementById('card').classList.toggle('flip',flipped);
+  document.getElementById('ca').style.display=flipped?'flex':'none';
+}
+function nav(d) {
+  if(!deck.length) return;
+  idx=(idx+d+deck.length)%deck.length; showC();
+}
+function mark(good) {
+  if(!deck.length) return;
+  const c=deck[idx], cur=gm(c);
+  prog[c.id]=good?(cur==='new'?'learning':cur==='learning'?'mastered':'mastered'):(cur==='mastered'?'learning':'new');
+  savP(); nav(1);
+}
+function shuf() { for(let i=deck.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[deck[i],deck[j]]=[deck[j],deck[i]];} idx=0; showC(); }
+
+// Touch
+let tx=0,ty=0,tt=0;
+document.getElementById('cw').addEventListener('touchstart',e=>{tx=e.touches[0].clientX;ty=e.touches[0].clientY;tt=Date.now();},{passive:true});
+document.getElementById('cw').addEventListener('touchend',e=>{
+  const dx=e.changedTouches[0].clientX-tx,dy=e.changedTouches[0].clientY-ty,dt=Date.now()-tt;
+  if(Math.abs(dx)>Math.abs(dy)&&Math.abs(dx)>50) nav(dx<0?1:-1);
+  else if(Math.abs(dx)<12&&Math.abs(dy)<12&&dt<300) flipC();
+},{passive:true});
+document.getElementById('card').addEventListener('click',flipC);
+
+// ── QUIZ ───────────────────────────────────────────────────────────────
+let qqs=[],qi=0,qs=0;
+function startQ() {
+  document.getElementById('qr').style.display='none';
+  document.getElementById('qq').style.display='';
+  document.getElementById('qcs').style.display='';
+  const pool=VOCAB.filter(c=>c.meaning_ja&&c.meaning_ja.trim());
+  const n=Math.min(parseInt(st.quizCount)||10,pool.length);
+  qqs=shufA([...pool]).slice(0,n); qi=0; qs=0; showQ();
+}
+function showQ() {
+  const q=qqs[qi];
+  document.getElementById('qqn').textContent=`問題 ${qi+1} / ${qqs.length}`;
+  document.getElementById('qq').textContent=q.word;
+  document.getElementById('qnext').style.display='none';
+  const wrong=shufA(VOCAB.filter(c=>c.id!==q.id&&c.meaning_ja&&c.meaning_ja.trim())).slice(0,3).map(c=>c.meaning_ja);
+  const opts=shufA([q.meaning_ja,...wrong]);
+  const el=document.getElementById('qcs'); el.innerHTML='';
+  opts.forEach(ch=>{
+    const b=document.createElement('button'); b.className='qc'; b.textContent=ch;
+    b.onclick=()=>ansQ(b,ch===q.meaning_ja,q); el.appendChild(b);
+  });
+}
+function ansQ(btn,ok,q) {
+  document.querySelectorAll('.qc').forEach(b=>{b.disabled=true;if(b.textContent===q.meaning_ja)b.classList.add('correct');});
+  if(!ok) btn.classList.add('wrong'); else qs++;
+  document.getElementById('qnext').style.display='';
+}
+function nxtQ() {
+  if(++qi>=qqs.length) {
+    document.getElementById('qq').style.display='none';
+    document.getElementById('qcs').style.display='none';
+    document.getElementById('qnext').style.display='none';
+    document.getElementById('qr').style.display='';
+    document.getElementById('qsc').textContent=Math.round(qs/qqs.length*100)+'%';
+  } else showQ();
+}
+
+// ── WORDS ──────────────────────────────────────────────────────────────
+function filt() {
+  let l=VOCAB;
+  if(wf.year!=='all') l=l.filter(c=>c.year===parseInt(wf.year));
+  if(wf.pos!=='all') l=l.filter(c=>c.pos===wf.pos);
+  if(wf.mastery!=='all') l=l.filter(c=>gm(c)===wf.mastery);
+  if(wf.search){ const q=wf.search.toLowerCase(); l=l.filter(c=>c.word.toLowerCase().includes(q)||(c.meaning_ja||'').includes(q)||(c.example||'').toLowerCase().includes(q)); }
+  return wf.sortNew ? [...l].reverse() : l;
+}
+function renW() {
+  const l=filt();
+  document.getElementById('wcount').textContent=`${l.length}件`;
+  const el=document.getElementById('wl');
+  if(!l.length){ el.innerHTML='<div class="empty">該当する単語がありません</div>'; return; }
+  el.innerHTML=l.slice(0,300).map(c=>{
+    const m=gm(c), ml={new:'未学習',learning:'学習中',mastered:'習得済み'}[m], mc=`m${m[0]}`;
+    const mo=parseInt((c.date_added||'').split('/')[0])||'';
+    const dl=c.year?(c.year+(mo?'/'+mo:'')):'';
+    const pl=POS_L[c.pos]||c.pos||'';
+    return `<div class="wi"><div class="wit"><div class="wiw">${esc(c.word)}</div>
+      <div class="wib"><span class="mb ${mc}">${ml}</span>${dl?`<span class="db">${dl}</span>`:''}</div></div>
+      ${c.meaning_ja?`<div class="wim">${esc(c.meaning_ja)}</div>`:''}
+      ${c.example?`<div class="wie">${esc(c.example)}</div>`:''}
+      ${pl?`<span class="ptag">${pl}</span>`:''}
+    </div>`;
+  }).join('');
+}
+function setSrch(v){wf.search=v;renW();}
+function setY(v,b){wf.year=v;chp('ybar',b);renW();}
+function setP(v,b){wf.pos=v;chp('pbar',b);renW();}
+function setM(v,b){wf.mastery=v;chp(b.parentElement,b);renW();}
+function togSort(){wf.sortNew=!wf.sortNew;document.getElementById('sortbtn').textContent=wf.sortNew?'新→旧':'旧→新';renW();}
+function chp(p,b){
+  const el=typeof p==='string'?document.getElementById(p):p;
+  if(el)el.querySelectorAll('.chip').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active');
+}
+
+// ── ADD WORD ───────────────────────────────────────────────────────────
+function addW() {
+  const w=document.getElementById('aw').value.trim();
+  if(!w){alert('単語を入力してください');return;}
+  const now=new Date();
+  pq.push({word:w,notes:document.getElementById('an').value.trim(),date_added:`${now.getMonth()+1}/${now.getDate()}`});
+  savQ();
+  document.getElementById('aw').value='';
+  document.getElementById('an').value='';
+  alert(`✓ "${w}" をキューに追加しました`);
+}
+function remQ(i){ pq.splice(i,1); savQ(); }
+function updQUI() {
+  const n=pq.length;
+  document.getElementById('qcnt').textContent=n;
+  const b=document.getElementById('add-badge');
+  b.textContent=n; b.style.display=n?'':'none';
+  document.getElementById('qempty').style.display=n?'none':'';
+  const pl=document.getElementById('plist'); pl.style.display=n?'':'none';
+  document.getElementById('expwrap').style.display=n?'':'none';
+  pl.innerHTML=pq.map((q,i)=>`<div class="pi"><div><div class="piw">${esc(q.word)}</div>${q.notes?`<div style="font-size:12px;color:var(--tx2)">${esc(q.notes)}</div>`:''}</div><button class="pdel" onclick="remQ(${i})">✕</button></div>`).join('');
+}
+function expQ() {
+  const a=document.createElement('a');
+  a.href='data:application/json;charset=utf-8,'+encodeURIComponent(JSON.stringify({entries:pq},null,2));
+  a.download='queue.json'; a.click();
+}
+
+// ── STATS CHARTS ───────────────────────────────────────────────────────
+function renderTrend() {
+  const yg={};
+  VOCAB.forEach(v=>{ const y=v.year||2020; yg[y]=(yg[y]||0)+1; });
+  const ys=ALL_YEARS.slice().reverse();
+  const max=Math.max(...Object.values(yg),1);
+  const W=60, PAD=10, H=160, BOTTOM=30, LABELH=16;
+  const barH=H-BOTTOM-LABELH-PAD;
+  const svgW=ys.length*W+PAD*2;
+  let rects='', texts='', nums='';
+  ys.forEach((y,i)=>{
+    const cnt=yg[y]||0;
+    const bh=Math.round((cnt/max)*barH);
+    const x=PAD+i*W+8, bw=W-16;
+    const by=H-BOTTOM-bh;
+    const hue=200+i*20;
+    rects+=`<rect x="${x}" y="${by}" width="${bw}" height="${bh}" rx="6" fill="var(--ac)" opacity="${0.5+0.5*(cnt/max)}"/>`;
+    nums+=`<text x="${x+bw/2}" y="${by-5}" text-anchor="middle" font-size="11" font-weight="700" fill="var(--tx)">${cnt}</text>`;
+    texts+=`<text x="${x+bw/2}" y="${H-BOTTOM+14}" text-anchor="middle" font-size="11" fill="var(--tx2)">${y}</text>`;
+  });
+  // Baseline
+  const base=`<line x1="${PAD}" y1="${H-BOTTOM}" x2="${svgW-PAD}" y2="${H-BOTTOM}" stroke="var(--bd)" stroke-width="1"/>`;
+  const svg=document.getElementById('trend-svg');
+  svg.setAttribute('width', svgW);
+  svg.innerHTML=base+rects+nums+texts;
+}
+
+function renderDonut() {
+  let n=0,l=0,m=0;
+  VOCAB.forEach(c=>{ const x=gm(c); if(x==='new')n++;else if(x==='learning')l++;else m++; });
+  const tot=VOCAB.length;
+  const segs=[
+    {v:m,color:'var(--gn)',label:'習得済み'},
+    {v:l,color:'var(--yw)',label:'学習中'},
+    {v:n,color:'var(--pu)',label:'未学習'},
+  ];
+  let angle=-Math.PI/2;
+  let paths='';
+  segs.forEach(s=>{
+    if(!s.v) return;
+    const a=(s.v/tot)*Math.PI*2;
+    const x1=Math.cos(angle), y1=Math.sin(angle);
+    const x2=Math.cos(angle+a), y2=Math.sin(angle+a);
+    const large=a>Math.PI?1:0;
+    paths+=`<path d="M 0 0 L ${x1.toFixed(3)} ${y1.toFixed(3)} A 1 1 0 ${large} 1 ${x2.toFixed(3)} ${y2.toFixed(3)} Z" fill="${s.color}"/>`;
+    angle+=a;
+  });
+  // Inner circle (donut hole)
+  paths+=`<circle cx="0" cy="0" r="0.55" fill="var(--sf)"/>`;
+  // Center label
+  const mastPct=Math.round(m/tot*100);
+  paths+=`<text x="0" y="-0.08" text-anchor="middle" font-size="0.26" font-weight="800" fill="var(--tx)">${mastPct}%</text>`;
+  paths+=`<text x="0" y="0.18" text-anchor="middle" font-size="0.14" fill="var(--tx2)">習得</text>`;
+  document.getElementById('donut-svg').innerHTML=paths;
+
+  const legend=segs.map(s=>`<div class="dl"><div class="dldot" style="background:${s.color}"></div>${s.label}<span class="dlnum">${s.v}</span></div>`).join('');
+  document.getElementById('donut-legend').innerHTML=legend;
+}
+
+function renderYearTable() {
+  const rows=ALL_YEARS.map(y=>{
+    const words=VOCAB.filter(v=>(v.year||2020)===y);
+    const tot=words.length;
+    const m=words.filter(v=>gm(v)==='mastered').length;
+    const l=words.filter(v=>gm(v)==='learning').length;
+    const nw=tot-m-l;
+    const mp=tot?Math.round(m/tot*100):0;
+    const lp=tot?Math.round(l/tot*100):0;
+    const np=100-mp-lp;
+    return `<tr>
+      <td class="yn">${y}</td>
+      <td>${tot}</td>
+      <td>
+        <div style="font-size:11px;color:var(--tx2)">${mp}% 習得 / ${lp}% 学習中</div>
+        <div class="prog-seg">
+          <div class="seg-m" style="width:${mp}%"></div>
+          <div class="seg-l" style="width:${lp}%"></div>
+          <div class="seg-n" style="width:${np}%"></div>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+  document.getElementById('yt').innerHTML=
+    `<thead><tr><th>年</th><th>件数</th><th>習熟度</th></tr></thead><tbody>${rows}</tbody>`;
+}
+
+function renderStats() {
+  renderTrend();
+  renderDonut();
+  renderYearTable();
+}
+
+// ── SETTINGS ───────────────────────────────────────────────────────────
+function setRF(f) {
+  st.revFilter=f;
+  ['all','new','learning','mastered'].forEach(k=>document.getElementById('rf-'+k).textContent=f===k?'✓':'');
+  savSt('revFilter',f); buildDeck();
+}
+function resetP() {
+  if(!confirm('全ての進捗をリセットしますか？')) return;
+  prog={};savP();buildDeck();renW();renderStats();
+}
+
+// ── NAV ────────────────────────────────────────────────────────────────
+function sw(id,btn) {
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.nb').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  if(id==='vq')startQ();
+  if(id==='vw')renW();
+  if(id==='va')updQUI();
+  if(id==='vst'){ renderStats(); ['all','new','learning','mastered'].forEach(k=>document.getElementById('rf-'+k).textContent=(st.revFilter===k)?'✓':''); }
+}
+
+// ── UTILS ──────────────────────────────────────────────────────────────
+function shufA(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+// ── INIT ───────────────────────────────────────────────────────────────
+function initApp() {
+  loadSt();
+  buildDeck(); renW(); updQUI();
+  setRF(st.revFilter||'all');
+  if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
+
+checkAuth();
+if(sessionStorage.getItem('va')==='1'){ unlock(); }
+</script>
+</body>
+</html>

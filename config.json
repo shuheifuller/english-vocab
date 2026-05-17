@@ -1,0 +1,10 @@
+{
+  "notion_token": "",
+  "notion_db_id": "a7f9fe05-ee04-42f0-bbc7-6990db0963f6",
+  "dictionary_api": "https://api.dictionaryapi.dev/api/v2/entries/en/",
+  "translation_api": "https://api.mymemory.translated.net/get",
+  "notion_ds_id": "a7f9fe05-ee04-42f0-bbc7-6990db0963f6",
+  "google_client_id": "994940387858-2tg6ab5ukicc5ndl1atm1um1j38p3u49.apps.googleusercontent.com",
+  "authorized_email": "shoeheyu@gmail.com",
+  "github_pages_url": "https://shuheifuller.github.io/english-vocab"
+}

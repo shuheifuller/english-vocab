@@ -1,0 +1,441 @@
+# Vocabulary Index
+Last updated: 2026-05-17 | Total: 411 words
+
+> This file is Claude's primary navigation tool. Search here first, then drill into theme pages.
+
+## ビジネス・職場 (33 words)
+- **Arbitrarily** (id:41) — ランダムに、無作為に
+- **Bread and butter** (id:31) — 最も重要なもの、必要不可欠なもの
+- **Cadence** (id:319) — 周期、リズム
+- **Champion ST** (id:72) — 擁護する、守る、庇う
+- **Double down** (id:43) — 
+- **Double down** (id:219) — さらに力を入れる、強化する
+- **Double down on ST** (id:109) — 
+- **Dwell** (id:203) — 住む、居住する
+- **Elevator pitch** (id:207) — 簡潔な説明
+- **Factor in ST** (id:237) — STを考慮に入れる
+- **Flesh out** (id:62) — 
+- **Go south** (id:101) — が悪化する
+- **Housekeeping** (id:204) — 事務連絡、連絡事項、基本的な注意事項
+- **In a nutshell** (id:17) — 一言で言えば
+- **Leverage** (id:287) — を活用する
+- **Low hanging fruit** (id:36) — 簡単に得られるもの、達成できること
+- **Made redundant** (id:45) — リストラされる、失業する、不必要になる
+- **No brainer** (id:18) — 当たり前、考える必要がない、簡単すぎる
+- **No brainer** (id:111) — 思考を必要としないもの
+- **Overarching** (id:28) — 包括的な
+- **Overhead (UC)** (id:201) — 追加の作業、諸経費
+- **Proposition** (id:406) — 提案、議案
+- **Rapport** (id:238) — 相互理解、相互信頼
+- **Reiterate** (id:277) — 繰り返す、再度述べる
+- **Remuneration** (id:42) — 報酬
+- **Repurpose** (id:202) — 目的を変えて再利用する
+- **Run rate** (id:269) — ランレート（直近の実績値の傾向がそのまま続くと仮定した場合の将来予測値）
+- **Sub-optimal** (id:282) — 最適ではない
+- **Surface ST (verb)** (id:217) — アイデアなどを表面に出す
+- **Templatize** (id:100) — テンプレート化する
+- **Upskill** (id:296) — スキルをあげる
+- **Upskill** (id:353) — のスキルをあげる
+- **Velocity** (id:195) — 速度
+
+## イディオム・慣用句 (44 words)
+- **A matter of time** (id:395) — 時間の問題
+- **Add up** (id:117) — おかしい、正しくない、つじつまが合わない
+- **Bread and butter** (id:31) — 最も重要なもの、必要不可欠なもの
+- **Break a leg** (id:171) — 頑張る、うまくやる
+- **Bring SO up to speed** (id:161) — SOに必要な情報を伝えて状況を理解させる
+- **Cannot see the forest for the trees** (id:374) — 木を見て森を見ず
+- **Cut to the chase** (id:240) — 本題に入る
+- **Double edged sword** (id:342) — 諸刃の剣
+- **Fall on someone's sword** (id:241) — 誰かの代わりに責任を負う
+- **Flesh out** (id:62) — 
+- **For god's sake** (id:197) — ひどい、あきれた、どうか頼むから
+- **Fwiw (for what it's worth)** (id:89) — これはあくまで私の個人的な意見ですが
+- **Get around to ST** (id:345) — STにようやく取り掛かる
+- **Go south** (id:101) — が悪化する
+- **Goes by in a blink of an eye** (id:77) — またたく間に過ぎる。瞬きぐらい一瞬で過ぎる
+- **Going once going twice** (id:112) — ミーティングなどを閉める前にする最終確認のためのカウントダウン
+- **Have a bun in the oven** (id:302) — 妊娠する
+- **If the juice is worth the squeeze** (id:61) — 
+- **In a nutshell** (id:17) — 一言で言えば
+- **In retrospect** (id:21) — 振り返ってみると、
+- **Just because** (id:38) — なんとなく、そんな気分だったから
+- **Lost in translation** (id:279) — 翻訳で意味が失われる
+- **Low hanging fruit** (id:36) — 簡単に得られるもの、達成できること
+- **Monday Blues** (id:298) — 月曜日に気乗りしない状態
+- **My 2 cents** (id:283) — 私のちょっとした意見
+- **My hats off to SO** (id:137) — SOに脱帽する、を称賛する
+- **Nitty-gritty** (id:30) — 核心、本題
+- **No brainer** (id:18) — 当たり前、考える必要がない、簡単すぎる
+- **No brainer** (id:111) — 思考を必要としないもの
+- **Not my cup of tea** (id:155) — 興味がない
+- **Not to mention** (id:9) — 言うまでもなく
+- **Off the top of my head** (id:172) — パッと思いつく限り
+- **Over the moon** (id:391) — 大喜び
+- **Over the moon (adj)** (id:303) — 大喜びしている
+- **Piggy back ST** (id:19) — 
+- **Run past SO** (id:405) — SOに相談する、尋ねる
+- **So be it** (id:115) — それならそれでいい
+- **So much so that SVO** (id:1) — とてもそうなのでthat以下をしたほど
+- **Speak of the devil** (id:106) — ちょうど噂をすれば
+- **Tell me about it** (id:178) — 本当にそうだよね
+- **The devil's in the details** (id:223) — 細かいところに落とし穴がある
+- **Two cents** (id:96) — パッと思いついたこと、簡単な考え
+- **Yet another** (id:65) — さらに別に(さらにを強調)
+- **You said it** (id:173) — 全くその通りだ
+
+## オーストラリア英語 (7 words)
+- **Be suss on ST/SO** (id:73) — に疑いをかける
+- **Brolly** (id:266) — 傘
+- **Down Under** (id:60) — オーストラリア
+- **Go walkabout** (id:146) — 放浪生活に出る、行方不明
+- **Kerb** (id:124) — 縁石
+- **Nasal Congestion** (id:71) — 鼻詰まり
+- **She'll be right (Aussie slang)** (id:190) — Whatever is wrong will right itself with time
+
+## 医療・健康 (22 words)
+- **Asymptomatic** (id:379) — 自覚症状の無い
+- **Autism** (id:129) — 自閉症
+- **Bronchitis** (id:81) — 気管支炎
+- **Cardiac arrest (C)** (id:284) — 心肺停止
+- **Complications** (id:411) — 合併症
+- **Contraception** (id:123) — 避妊(法)
+- **Exhale** (id:131) — 空気を吐き出す
+- **Fatality rate** (id:270) — 致死率
+- **Fatality rate** (id:324) — 致死率
+- **Go viral** (id:257) — 急速に広まる、伝搬する
+- **Hypertension** (id:325) — 高血圧症
+- **Inhale** (id:130) — 空気を吸い込む、吸引する
+- **Leukaemia** (id:168) — 白血病
+- **Mortality** (id:47) — 死亡率
+- **Nasal Congestion** (id:71) — 鼻詰まり
+- **Pathology** (id:68) — 
+- **Pediatric** (id:169) — 小児の
+- **Respiratory** (id:258) — 呼吸器系
+- **Resuscitate** (id:154) — 蘇生する
+- **Schizophrenia** (id:191) — 統合失調症
+- **Tuberculosis** (id:157) — 結核
+- **Vasectomy** (id:389) — 精管切除術(男性避妊手術)
+
+## 法律・政治 (26 words)
+- **Acquitted** (id:152) — 潔白な、無罪な
+- **Anarchy** (id:310) — 無秩序、無政府状態
+- **Antisemitism** (id:2) — 反ユダヤ主義
+- **Cause of action** (id:141) — 方針、やり方、行動様式
+- **Coalition (=alliance)** (id:15) — 連合、アライアンス
+- **Defy** (id:330) — に逆らう、従わない
+- **Disciplinary action** (id:176) — 懲戒処分
+- **Give SO Silent Treatment** (id:135) — SOにだんまりを決め込む
+- **Human trafficking** (id:98) — 人身売買
+- **Inauguration** (id:140) — 就任
+- **Incitement** (id:133) — 扇動、鼓舞、誘因
+- **Insurrection** (id:134) — 反逆、反乱、謀反
+- **Jurisdiction** (id:92) — 管轄
+- **Jurisdiction** (id:323) — 管轄、管轄区域
+- **Manslaughter** (id:290) — 故殺(意図せず結果的に殺してしまうこと)、過失致死
+- **Misogyny** (id:162) — 女性嫌悪
+- **Monarchy** (id:160) — 君主制
+- **Puberty** (id:105) — 思春期
+- **Punitive** (id:236) — 懲罰的な、過酷な
+- **Pyramid scheme** (id:6) — ネズミこう、マルチ商法
+- **Relinquish ST** (id:7) — STを手放す、捨てる
+- **Solidarity** (id:103) — 一致団結、結束、連帯
+- **Sovereignty** (id:93) — 主権
+- **Ultimatum** (id:119) — 最後の通告、最終決断
+- **Voluntary Administration** (id:120) — 破産手続き
+- **Xenophobia** (id:163) — 外国人嫌悪
+
+## 社会・人間関係 (28 words)
+- **Amicable** (id:144) — 円満な、友好的な
+- **Apathy** (id:20) — 無関心、無頓着、無気力
+- **Blunt** (id:394) — 率直な、ストレートな、ざっくばらんな
+- **Bystander** (id:174) — 傍観者
+- **Bystander effect** (id:57) — 傍観者効果
+- **Complacency (N)** (id:354) — 自己満足、独りよがり
+- **Concur with SO** (id:404) — SOに同意する
+- **Cringe** (id:151) — 
+- **Demean SO** (id:29) — SOを辱める
+- **Dissuade SO from** (id:339) — 説得によってやめさせる
+- **Equity (vs Equality)** (id:403) — 公平性
+- **Exasperate SO** (id:113) — SOを憤慨させる、激怒させる
+- **Gaffe** (id:24) — 失言
+- **Indifferent** (id:180) — そっけない、冷たい、無関心な
+- **Intimidate** (id:333) — を怯えさせる
+- **Misconduct** (id:306) — 不正行為
+- **Misogyny** (id:162) — 女性嫌悪
+- **Obnoxious** (id:392) — 感じの悪い、反抗的な
+- **Patriarchy** (id:56) — 家長制
+- **Prejudice** (id:312) — 先入観、偏見
+- **Rapport** (id:238) — 相互理解、相互信頼
+- **Resentment** (id:166) — 恨み、憎しみ
+- **Retaliation** (id:175) — リベンジ
+- **Social butterfly** (id:74) — 八方美人
+- **Solidarity** (id:103) — 一致団結、結束、連帯
+- **Sycophant** (id:356) — ごますりな人、おべっか使い
+- **Trailblazer** (id:167) — 草分け的存在、パイオニア
+- **Xenophobia** (id:163) — 外国人嫌悪
+
+## その他 (263 words)
+- **(The) Wild West** (id:104) — 未開の地、新しく不明な点が多い
+- **A sound argument** (id:276) — 正論
+- **Abduct SO** (id:145) — 拉致する
+- **Actions speak louder than words** (id:35) — 
+- **Actualize ST** (id:10) — STを具体化する
+- **Adultery** (id:274) — 不倫、婚外性行
+- **Adverse effect** (id:349) — 悪影響
+- **Aggravate** (id:215) — を悪化させる、荒立てる
+- **Agnostic** (id:243) — 神の存在を否定しない無宗教者(=不可知論者)
+- **Ahead of the curve** (id:311) — 先手を打って、先回りして、先取りして
+- **Alleviate** (id:198) — を和らげる、緩和する
+- **Allude to ST** (id:13) — STをほのめかす、暗示する
+- **Alluded question** (id:70) — 
+- **Alluding question** (id:12) — 
+- **Alumni** (id:221) — 卒業生
+- **Apprehensive** (id:218) — 心配している、不安な
+- **Apprised** (id:272) — 知らされている
+- **Arbitrary** (id:183) — 任意の、恣意的な、無作為な
+- **Arson** (id:256) — 放火
+- **As far as X is concerned** (id:281) — Xに関する限り
+- **Assimilate** (id:165) — を取り込む、取り入れる
+- **Attest to ST** (id:350) — STを証明する
+- **Attribute** (id:331) — STに帰する、STのせいにする
+- **Auto-pilot mode** (id:246) — 自動運転
+- **Autonomy** (id:46) — 自主性、自由、自治権
+- **Axe** (id:299) — をやめる、終了する
+- **Axis** (id:235) — 軸
+- **Baseless** (id:407) — 事実無根の、根拠のない
+- **Be across ST** (id:267) — に精通する、を知っている
+- **Be after** (id:196) — 狙う、追跡する
+- **Be attributed to ST** (id:332) — STが原因と考えられる
+- **Be blindsided by ST** (id:314) — STによって不意打ちをくらう
+- **Be deprived of SO/ST** (id:297) — STやSOを奪われる
+- **Be on top of ST** (id:305) — STに責任を持って自発的に行動する
+- **Be taken aback** (id:253) — 驚く、衝撃を受ける
+- **Bear in mind** (id:372) — STを心に留める
+- **Blow over** (id:384) — 静まる、おさまる、過ぎ去る
+- **Blueprint** (id:398) — ひな形、設計図、パターン
+- **Bonanza** (id:343) — 大当たり、大儲け、金の卵
+- **Break grass option** (id:16) — 緊急の場合に普段制限されている権限を与えるオプション
+- **Brick and mortar companies** (id:75) — (実店舗で)店舗経営をする会社
+- **Burden (C)** (id:260) — お荷物、厄介、負荷
+- **Bustle** (id:280) — 精力的に忙しくする
+- **By far** (id:376) — ずばぬけて
+- **Cabin fever** (id:83) — 
+- **Cabin fever** (id:309) — 長期間閉じ込められることによる強い閉塞感や焦燥感
+- **Call on SO for ST** (id:245) — STをSOに求める、要請する
+- **Carnage** (id:225) — 大量殺人、大虐殺
+- **Catalog ST (verb)** (id:234) — STをリストとしてまとめる、カテゴリー分けする
+- **Cater for ST** (id:99) — STに応じる、応える、満たす
+- **Caveat** (id:5) — 警告、注意 (=warning)
+- **Caveat (C)** (id:32) — 警告、注意
+- **Cervix** (id:63) — 
+- **Chastise** (id:264) — を正す、直す、矯正する
+- **Cherish** (id:265) — 愛おしむ、愛でる、大切にする
+- **Civil** (id:181) — 
+- **Cliche (adj)** (id:385) — 決まり文句な、月並みな
+- **Coefficient** (id:54) — 係数
+- **Coefficient of Variation (CoV)** (id:53) — 変動係数
+- **Cohort** (id:206) — a group of people with a shared characteristic
+- **Collateral** (id:352) — 付随した、二次的な
+- **Conform to ST** (id:33) — STに従う、準ずる、同調する
+- **Conformism** (id:34) — 同調主義
+- **Connotation** (id:64) — ほのめかし、暗示
+- **Consensual** (id:248) — 同意による
+- **Convoluted** (id:22) — ややこしい、複雑すぎる
+- **Counterintuitive** (id:233) — 直感に反する
+- **Counterproductive** (id:232) — 逆効果の
+- **Decay** (id:66) — 
+- **Decipher ST** (id:375) — STを読み解く、を解読する
+- **Decisive** (id:381) — 断固たる、決定的な
+- **Deflect** (id:222) — をそらす、はじく
+- **Deliberately** (id:358) — 意図的に
+- **Deprive SO of ST** (id:216) — SOからSTを取り上げる、奪う
+- **Derail** (id:86) — を脱線させる
+- **Deter SO from** (id:307) — SOが何かするのを阻止する
+- **Dexterity** (id:386) — 器用さ
+- **Dictate** (id:212) — を指示する、命令する、決定する
+- **Divide and conquer** (id:4) — 
+- **Do wonders** (id:263) — 驚くべき効果がある
+- **Drawn out** (id:37) — 引き伸ばされた、長々とした
+- **Dwarf** (id:94) — を妨げる、小さく見せる
+- **Dynamic** (id:249) — 流動的な、活動的な
+- **Dynamic** (id:346) — 変化する、流動的な
+- **Ear-pleasing** (id:85) — 聞こえのいい
+- **Echo ST** (id:380) — STに同意する、を繰り返す
+- **Eerie** (id:371) — 不気味な
+- **Effing** (id:326) — Fuckingの婉曲語
+- **Epitome** (id:199) — 典型
+- **Epitomize** (id:251) — を代表する
+- **Eradicate** (id:329) — を殲滅する、根絶やしにする
+- **et al** (id:25) — その他各位、~など、~およびその他
+- **Evict** (id:316) — を追い出す
+- **Excel at ST** (id:382) — STに秀でる
+- **Exhaustive** (id:107) — 完全な、網羅的な、包括的な
+- **Exponential** (id:11) — 指数関数的に
+- **Extrinsic** (id:229) — 外因的な、外からの
+- **Fabricator** (id:44) — でっちあげ
+- **Farmed** (id:213) — 養殖の/された
+- **Fasting** (id:399) — 断食
+- **Fertilization treatment** (id:84) — 不妊治療
+- **Fill SO in (with ST)** (id:226) — SOを(STで)補足して話に追いつかせる
+- **Fireside chat** (id:293) — 落ち着いた雰囲気で楽しむ会話
+- **Flying blind** (id:87) — 
+- **FOMO (fear of missing out)** (id:344) — 取り残される恐怖心 = 同調圧力
+- **Gauge** (id:205) — を測定する、評価する、判断する
+- **Genesis** (id:188) — 発生、起源、創生
+- **Get hands dirty** (id:351) — 実際にやってみる、手を動かす
+- **Get in the way of ST** (id:408) — STの邪魔をする、妨げになる
+- **Get one's head around ST** (id:373) — STを理解する
+- **Give SO the benefit of the doubt** (id:114) — (疑わしいところはあるが)SOの言動を信じる
+- **Glass Cliff** (id:220) — ガラスの崖 - 女性が危機的状況でリーダーに昇進しやすい現象
+- **Go along with ST** (id:110) — STに同意
+- **Grudge** (id:242) — 根深い恨み
+- **Guardrails** (id:91) — 
+- **Happen in a vacuum** (id:142) — 他と無関係に起こる
+- **Hard-earned (adj)** (id:295) — 努力して得た
+- **Hear SO out** (id:401) — SOの話を最後まで注意して聞く
+- **Herd immunity** (id:348) — 集団免疫
+- **Heterogeneous** (id:224) — 異種の、異質な
+- **Hibernate** (id:208) — 休眠させる
+- **Hibernate** (id:377) — 冬眠する/させる
+- **Hoax** (id:410) — でっちあげ
+- **Hold SO accountable for ST** (id:102) — SOにSTの責任を負わせる
+- **Homophone (C)** (id:3) — 同音異義 - 同じ方法で発音されるが、意味またはつづり方または両方ともにおいて異なるならば、2つの語…
+- **Homy** (id:122) — 家庭的
+- **Huddle** (id:259) — 身を寄せ合う
+- **Hygiene (non-C)** (id:278) — 衛生状態
+- **Hyperbolize** (id:185) — 言いすぎる、誇張する
+- **I know for a fact that SV** (id:239) — (That以下)を事実として知っている
+- **Immersive** (id:409) — 没入感のある
+- **Impeccable** (id:177) — 完璧な、非の打ち所がない
+- **Implications** (id:286) — 引き起こされるだろう結果、意味合い
+- **In accordance with ST** (id:138) — STに合わせて
+- **In grief** (id:387) — 傷心中、深い哀しみの中にいる
+- **In light of** (id:158) — 
+- **In light of** (id:320) — を考慮すると
+- **In light of ST** (id:187) — ST(新しい情報)を踏まえると
+- **In one's favor** (id:182) — xxに有利な
+- **In turn** (id:338) — 順番に
+- **Incentivize** (id:244) — (何かしらのincentiveでもって) 促す、動機付けする
+- **Intake** (id:273) — 摂取する、取り込む
+- **Interplay (C)** (id:252) — 相互作用
+- **Intrinsic** (id:228) — 内因的な、内からの
+- **Joke aside** (id:230) — 冗談はさておき
+- **Keep ST handy** (id:268) — を手元に置く
+- **Keep you company** (id:289) — あなたについて行く
+- **Knowingly (adv)** (id:378) — 知りながら
+- **Laid-back** (id:327) — くつろいだ、リラックスした
+- **Leeway** (id:121) — 許容範囲
+- **Leeway (UC)** (id:364) — 余裕
+- **Legislature** (id:291) — 立法機関
+- **Lexicon** (id:250) — 語彙、ボキャブラリー
+- **Lift** (id:321) — 解除する
+- **Like to like** (id:78) — 
+- **Look around the corner** (id:149) — 先を見越す
+- **Make X default to Y** (id:147) — XをYより優先させる
+- **Man of culture** (id:116) — (文化人を皮肉った)変態/すけべ
+- **MIA (missing in action)** (id:88) — 行方不明、連絡がつかない、ご無沙汰
+- **Microcosm** (id:164) — 縮図
+- **Mishmash** (id:58) — 寄せ集め
+- **Misology** (id:27) — 嫌悪
+- **Misstep** (id:254) — 過失
+- **Mistress** (id:128) — 愛人、不倫相手
+- **Mole** (id:49) — ほくろ
+- **Myopic** (id:90) — 目先のことしか考えない、短絡的な、近視眼的な
+- **Nosy (Adj)** (id:308) — 詮索する様、首を突っ込みがち
+- **Open the kimono with SO** (id:150) — SOに秘密の情報を明かす
+- **Out of league** (id:159) — 格が違う、スバ抜けて優秀、高嶺の花
+- **Overlay ST** (id:59) — STを横に並べる
+- **Paragon** (id:396) — 模範、手本
+- **Persona** (id:275) — 
+- **Pillar** (id:355) — 柱、大黒柱、中核
+- **Pitfall** (id:388) — 落とし穴
+- **Plateau** (id:271) — 台地、高地、高台
+- **Porpoise** (id:40) — (パフォーマンスが)不安定な
+- **Postmortem** (id:26) — 事後
+- **Pragmatic** (id:55) — 実践的な
+- **Preconceived notions** (id:23) — 先入観
+- **Preempt** (id:82) — 先取りする
+- **Pristine** (id:393) — 手付かずの、新鮮な、自然のままの
+- **Pro bono** (id:192) — 公共慈善活動
+- **Pro-(ST)** (id:8) — STを支持する人／団体
+- **Procreate** (id:136) — 子供を産む
+- **Profane (adj)** (id:363) — 口汚い、冒涜的な
+- **Pugnacious** (id:14) — 武力または暴力に訴えることのできるまたは用意のある
+- **Pull ST off** (id:156) — STをやり切る、達成する
+- **Quip** (id:368) — 冗談を言う
+- **Quotation** (id:67) — 見積もり
+- **Radius** (id:315) — 半径
+- **Rebate** (id:148) — 払い戻し、還付
+- **Rein in ST** (id:336) — STをとめる、抑制する
+- **Render** (id:285) — を与える、を表す、人や物をある状態にする
+- **Reprimand (N & V)** (id:328) — 叱責する、責める、懲戒する
+- **Resemble SO** (id:317) — SOと似ている
+- **Resilience** (id:337) — 柔軟性、耐性、回復力
+- **Resonate** (id:211) — 共鳴する/させる、反響する/させる
+- **Resourceful** (id:361) — 臨機応変な
+- **Rest assured that** (id:186) — (That以下のことを)確実であると思う
+- **Sane** (id:400) — 正気
+- **Scaffolding** (id:402) — 足場、処刑台
+- **Seasoned (adj)** (id:359) — 経験のある、熟練した
+- **Set ST apart** (id:194) — STを差別化する
+- **Sever ST** (id:132) — STを断ち切る
+- **Shameless Plug** (id:76) — アピールするのも恥ずかしいようなこと
+- **Shelling** (id:97) — 砲撃、集中砲火
+- **Skew** (id:125) — (事実など)を歪める、を歪曲する
+- **Skew** (id:227) — を歪める、歪曲する
+- **Soap actress** (id:48) — 昼ドラ女優
+- **Social Construct** (id:367) — 社会的構成概念
+- **Solicit** (id:108) — 
+- **Speak/Talk of the devil** (id:79) — 噂をすれば、
+- **Stand out** (id:334) — 目立つ、卓越する、際立つ
+- **Standard deviation** (id:52) — 標準偏差
+- **Status quo** (id:231) — 現状(維持)
+- **Stellar** (id:366) — 輝かしい、際立った、星の
+- **Stem from** (id:262) — から由来する、生じる
+- **Stigma** (id:294) — 汚点
+- **Streak** (id:126) — 流れ、連続
+- **Streisand effect** (id:170) — ストライサンド効果 - ある情報を隠蔽しようとする努力が、かえってその情報を広い範囲に拡散させてしま…
+- **Subset** (id:369) — 小さなまとまり、部分集合
+- **Substantial (adj)** (id:301) — かなりの、相当な
+- **Subtle (Adj)** (id:288) — 微妙な、繊細なニュアンス
+- **Sugar-coating ST** (id:370) — STの見かけを良くする
+- **Sugarcoated** (id:209) — 耳障りが良い、汚い部分を隠した
+- **Summon** (id:292) — を召喚する、を呼び出す
+- **Superficial** (id:255) — 表面的な
+- **Supposedly** (id:50) — 噂によれば
+- **Surreal** (id:322) — 非現実的な、夢のような
+- **Take on ST** (id:362) — STに取り組む(難題や困難)
+- **Take sides with SO** (id:143) — SOの一方を支持する
+- **Talk SO through ST** (id:304) — STについてSOに細かく説明する
+- **Tangent** (id:340) — 話がずれた
+- **Tangible** (id:341) — 目に見える、具体的な
+- **Tedious** (id:184) — 長ったらしい、つまらない、退屈な
+- **Tedious** (id:357) — つまらない、長ったらしい
+- **Temperamental** (id:318) — 気まぐれな
+- **Tepid** (id:189) — 生ぬるい
+- **Terrible twos** (id:300) — イヤイヤ期
+- **The edge goes to SO/ST** (id:335) — SO/STに軍配が
+- **Throttle** (id:210) — を抑制する、制限する
+- **Token** (id:360) — しるし、記念
+- **Torpedo ST** (id:127) — STを破壊する、撃沈する
+- **Trajectory** (id:214) — 曲線、軌道、軌跡
+- **Trump** (id:193) — 切り札を出す
+- **Truth be told** (id:397) — 実を言うと
+- **Unconditional support** (id:247) — 無条件のサポート
+- **Underdog** (id:118) — 負け犬
+- **Unprecedented** (id:313) — 前例のない、異例の、前代未聞
+- **Vandals** (id:80) — 野蛮人
+- **Variant** (id:139) — 変異種
+- **Vent** (id:51) — 発散する、不満を吐き出す
+- **Verbatim** (id:347) — 一語一句同じように、逐語的に
+- **Vigilance** (id:383) — 警戒、用心
+- **Voluntold** (id:69) — 嫌々ボランティア活動に従事させられる
+- **Vow (ST or to do ST)** (id:95) — STを誓う
+- **Walk out on SO** (id:390) — SOの元を去る
+- **Walk-through** (id:365) — 一つずつやってみせること、デモンストレーション
+- **Watercooler** (id:200) — おしゃべり、立ち話、井戸端会議
+- **Wholesome** (id:39) — 健全、健康的な
+- **Woo** (id:261) — に求愛する
+- **Workation** (id:153) — WorkとVacationを組み合わせた
+- **You can say that again** (id:179) — 本当にそうだよね
