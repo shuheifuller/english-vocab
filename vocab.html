@@ -23,13 +23,54 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 #app{display:flex;flex-direction:column;height:100%;padding-top:var(--st)}
 
 /* ── LOCK ─────────────────────────────────────── */
-#lock{position:fixed;inset:0;background:var(--bg);z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;padding:40px 24px}
-.lock-logo{font-size:56px;line-height:1}
-.lock-title{font-size:26px;font-weight:800;letter-spacing:-.5px}
-.lock-sub{font-size:13px;color:var(--tx2);text-align:center;max-width:260px;line-height:1.6}
-.g-btn{display:flex;align-items:center;gap:12px;background:#fff;color:#3c4043;border:1px solid #dadce0;border-radius:24px;padding:12px 24px;font-size:15px;font-weight:500;cursor:pointer;width:100%;max-width:280px;justify-content:center;transition:box-shadow .2s;font-family:inherit}
-.g-btn:hover{box-shadow:0 2px 10px rgba(0,0,0,.15)}
-.lock-err{color:var(--ac);font-size:12px;text-align:center;min-height:18px}
+#lock{
+  position:fixed;inset:0;z-index:999;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:0;padding:40px 24px;overflow:hidden;
+  background:radial-gradient(ellipse at 50% 0%,#1e1b3a 0%,#0b0b18 60%);
+}
+/* Starfield dots */
+#lock::before{
+  content:'';position:absolute;inset:0;
+  background-image:
+    radial-gradient(1px 1px at 15% 20%,rgba(255,255,255,.25) 0%,transparent 100%),
+    radial-gradient(1px 1px at 80% 15%,rgba(255,255,255,.2) 0%,transparent 100%),
+    radial-gradient(1.5px 1.5px at 40% 8%,rgba(255,255,255,.3) 0%,transparent 100%),
+    radial-gradient(1px 1px at 65% 35%,rgba(255,255,255,.15) 0%,transparent 100%),
+    radial-gradient(1px 1px at 25% 55%,rgba(255,255,255,.1) 0%,transparent 100%),
+    radial-gradient(1.5px 1.5px at 90% 50%,rgba(255,255,255,.2) 0%,transparent 100%),
+    radial-gradient(1px 1px at 10% 80%,rgba(255,255,255,.15) 0%,transparent 100%),
+    radial-gradient(1px 1px at 55% 75%,rgba(255,255,255,.1) 0%,transparent 100%);
+  pointer-events:none;
+}
+/* Moon glow behind cat */
+.lock-glow{
+  width:160px;height:160px;border-radius:50%;margin-bottom:-20px;
+  background:radial-gradient(circle,rgba(233,69,96,.18) 0%,rgba(167,139,250,.12) 50%,transparent 70%);
+  display:flex;align-items:center;justify-content:center;
+  filter:blur(0px);
+}
+.lock-cat{width:120px;height:120px;filter:drop-shadow(0 0 18px rgba(245,158,11,.35))}
+.lock-title{
+  font-size:22px;font-weight:800;letter-spacing:-.5px;
+  text-align:center;margin-top:20px;margin-bottom:6px;
+  background:linear-gradient(135deg,#fff 30%,#c4b5fd 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+.lock-sub{font-size:13px;color:var(--tx2);text-align:center;margin-bottom:28px;line-height:1.6}
+.g-btn{
+  display:flex;align-items:center;gap:12px;
+  background:rgba(255,255,255,.95);color:#3c4043;
+  border:none;border-radius:14px;
+  padding:14px 28px;font-size:15px;font-weight:600;
+  cursor:pointer;width:100%;max-width:300px;justify-content:center;
+  transition:transform .15s,box-shadow .2s;font-family:inherit;
+  box-shadow:0 4px 20px rgba(0,0,0,.3);
+}
+.g-btn:hover{transform:translateY(-1px);box-shadow:0 6px 24px rgba(0,0,0,.4)}
+.g-btn:active{transform:translateY(0)}
+.lock-err{color:var(--ac);font-size:12px;text-align:center;min-height:18px;margin-top:12px}
 
 /* ── NAV ──────────────────────────────────────── */
 #nav{display:flex;background:var(--sf);border-top:1px solid var(--bd);padding-bottom:var(--sb);flex-shrink:0;order:2}
@@ -175,9 +216,54 @@ textarea.fi{min-height:80px;resize:vertical;line-height:1.5}
 
 <!-- ═══════════ LOCK (Google SSO only) ═══════════ -->
 <div id="lock">
-  <div class="lock-logo">📚</div>
-  <div class="lock-title">英語単語帳</div>
-  <div class="lock-sub">Shuheiの個人英語学習帳<br>Googleアカウントでログインしてください</div>
+  <!-- Black cat illustration -->
+  <div class="lock-glow">
+    <svg class="lock-cat" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- Tail -->
+      <path d="M38 105 Q18 118 22 105 Q26 90 40 92" stroke="#1c1c2e" stroke-width="11" stroke-linecap="round" fill="none"/>
+      <!-- Body -->
+      <ellipse cx="62" cy="88" rx="32" ry="26" fill="#1c1c2e"/>
+      <!-- Neck / chest -->
+      <ellipse cx="62" cy="70" rx="18" ry="14" fill="#1c1c2e"/>
+      <!-- Head -->
+      <circle cx="62" cy="52" r="28" fill="#1c1c2e"/>
+      <!-- Left ear outer -->
+      <polygon points="36,34 42,12 56,36" fill="#1c1c2e"/>
+      <!-- Right ear outer -->
+      <polygon points="68,36 78,12 84,34" fill="#1c1c2e"/>
+      <!-- Left ear inner -->
+      <polygon points="39,32 44,17 54,34" fill="#e94560" opacity="0.5"/>
+      <!-- Right ear inner -->
+      <polygon points="70,34 77,17 81,32" fill="#e94560" opacity="0.5"/>
+      <!-- Left eye (amber, glowing) -->
+      <ellipse cx="50" cy="50" rx="8" ry="9" fill="#f59e0b"/>
+      <ellipse cx="50" cy="50" rx="3.5" ry="8" fill="#0b0b18"/>
+      <circle cx="47" cy="45" r="2" fill="white" opacity="0.9"/>
+      <!-- Right eye (amber, glowing) -->
+      <ellipse cx="74" cy="50" rx="8" ry="9" fill="#f59e0b"/>
+      <ellipse cx="74" cy="50" rx="3.5" ry="8" fill="#0b0b18"/>
+      <circle cx="71" cy="45" r="2" fill="white" opacity="0.9"/>
+      <!-- Nose -->
+      <polygon points="59,62 65,62 62,65.5" fill="#e94560" opacity="0.9"/>
+      <!-- Mouth -->
+      <path d="M58,66 Q62,70 66,66" stroke="#555" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+      <!-- Whiskers left -->
+      <line x1="20" y1="59" x2="50" y2="62" stroke="#8892b0" stroke-width="0.9" opacity="0.7"/>
+      <line x1="20" y1="65" x2="50" y2="65" stroke="#8892b0" stroke-width="0.9" opacity="0.7"/>
+      <!-- Whiskers right -->
+      <line x1="104" y1="59" x2="74" y2="62" stroke="#8892b0" stroke-width="0.9" opacity="0.7"/>
+      <line x1="104" y1="65" x2="74" y2="65" stroke="#8892b0" stroke-width="0.9" opacity="0.7"/>
+      <!-- Chest white patch -->
+      <ellipse cx="62" cy="82" rx="10" ry="8" fill="#1e1e32"/>
+      <!-- Paws -->
+      <ellipse cx="48" cy="112" rx="10" ry="6" fill="#1c1c2e"/>
+      <ellipse cx="76" cy="112" rx="10" ry="6" fill="#1c1c2e"/>
+    </svg>
+  </div>
+
+  <div class="lock-title">Shuhei's EN Vocab App</div>
+  <div class="lock-sub">Your personal English study companion</div>
+
   <button class="g-btn" id="g-signin-btn" onclick="startGoogleSignIn()">
     <svg width="18" height="18" viewBox="0 0 18 18">
       <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/>
@@ -185,7 +271,7 @@ textarea.fi{min-height:80px;resize:vertical;line-height:1.5}
       <path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/>
       <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z"/>
     </svg>
-    Googleアカウントでログイン
+    Continue with Google
   </button>
   <div class="lock-err" id="lock-err"></div>
 </div>
