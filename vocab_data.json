@@ -4966,5 +4966,17 @@
     "year": 2026,
     "pos": "noun",
     "mastery": "new"
+  },
+  {
+    "id": 415,
+    "word": "Catalyst",
+    "meaning_ja": "プロセスで消費されることなく化学反応の速度を増加させる物質。",
+    "english_def": "A substance that increases the rate of a chemical reaction without being consumed in the process.",
+    "example": "",
+    "notes": "What was the catalyst that made you want to become an actress?\nあなたが女優になろうとしたきかっけは何ですか？",
+    "date_added": "5/17",
+    "year": 2026,
+    "pos": "noun",
+    "mastery": "new"
   }
 ]
