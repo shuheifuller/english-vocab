@@ -1,0 +1,62 @@
+name: Add Vocabulary Word
+
+on:
+  workflow_dispatch:
+    inputs:
+      word:
+        description: 'English word or expression to add'
+        required: true
+      notes:
+        description: 'Optional memo/notes'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+jobs:
+  add-word:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Write queue
+        env:
+          WORD: ${{ inputs.word }}
+          NOTES: ${{ inputs.notes }}
+        run: |
+          python3 - <<'PYEOF'
+          import json, os, datetime
+          now = datetime.date.today()
+          word  = os.environ['WORD']
+          notes = os.environ.get('NOTES', '')
+          queue = {
+            "entries": [{
+              "word": word,
+              "notes": notes,
+              "date_added": f"{now.month}/{now.day}"
+            }]
+          }
+          with open('raw/queue.json', 'w', encoding='utf-8') as f:
+            json.dump(queue, f, ensure_ascii=False, indent=2)
+          print(f"Queue written: {word}")
+          PYEOF
+
+      - name: Run sync (lookup + regenerate HTML)
+        run: python3 sync.py
+
+      - name: Commit and push
+        env:
+          WORD: ${{ inputs.word }}
+        run: |
+          git config user.name  'vocab-bot'
+          git config user.email 'vocab-bot@users.noreply.github.com'
+          git add vocab.html vocab_data.json wiki/ raw/
+          git diff --staged --quiet || git commit -m "Add: $WORD"
+          git push

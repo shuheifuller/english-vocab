@@ -196,7 +196,16 @@ textarea.fi{min-height:80px;resize:vertical;line-height:1.5}
 
 <!-- ADD (first / default view) -->
 <div id="va" class="view active">
-  <div class="vh"><div><div class="vtitle">単語を追加</div><div class="vsub">意味・品詞は自動検索されます</div></div></div>
+  <div class="vh"><div><div class="vtitle">単語を追加</div><div class="vsub" id="add-mode-lbl">意味・品詞はクラウドで自動検索</div></div></div>
+
+  <!-- Cloud status banner -->
+  <div id="cloud-banner" style="display:none;margin:0 16px 12px;background:rgba(74,222,128,.12);border:1px solid var(--gn);border-radius:10px;padding:10px 14px;font-size:12px;color:var(--gn);display:flex;align-items:center;gap:8px">
+    <span>☁️</span><span>GitHub Actionsで自動処理されます</span>
+  </div>
+  <div id="notoken-banner" style="margin:0 16px 12px;background:rgba(251,191,36,.1);border:1px solid var(--yw);border-radius:10px;padding:10px 14px;font-size:12px;color:var(--yw)">
+    ⚠️ GitHubトークン未設定。<b>統計タブ → クラウド設定</b>でトークンを登録するとクラウド処理が使えます。
+  </div>
+
   <div class="fsec">
     <label class="flbl">単語 / 表現 *</label>
     <input class="fi" id="aw" placeholder="例: reconcile, in a nutshell" autocorrect="off" autocapitalize="none">
@@ -205,10 +214,21 @@ textarea.fi{min-height:80px;resize:vertical;line-height:1.5}
     <label class="flbl">メモ（任意）</label>
     <textarea class="fi" id="an" placeholder="どこで出会った？気になった点など…"></textarea>
   </div>
-  <div class="fsec"><button class="subbtn" onclick="addW()">キューに追加 →</button></div>
-  <div class="divider"></div>
   <div class="fsec">
-    <div class="stitle">追加待ちキュー（<span id="qcnt">0</span>件）</div>
+    <button class="subbtn" id="add-submit-btn" onclick="addW()">追加する →</button>
+  </div>
+
+  <!-- Cloud dispatch status -->
+  <div id="dispatch-status" style="display:none;margin:0 16px 14px;text-align:center">
+    <div id="dispatch-msg" style="font-size:13px;color:var(--tx2)"></div>
+    <div style="font-size:11px;color:var(--tx2);margin-top:6px">数分後にページをリロードすると反映されます</div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- Local queue (fallback) -->
+  <div class="fsec" id="local-queue-section">
+    <div class="stitle">ローカルキュー（<span id="qcnt">0</span>件）</div>
     <div id="qempty" class="empty">追加待ちの単語はありません</div>
     <div class="psec" id="plist" style="display:none"></div>
   </div>
@@ -339,6 +359,28 @@ textarea.fi{min-height:80px;resize:vertical;line-height:1.5}
   </div>
 
   <div class="ssec">
+    <div class="stitle">☁️ クラウド設定（GitHub Actions）</div>
+    <div class="sc">
+      <div class="sr" style="flex-direction:column;align-items:stretch;gap:10px;cursor:default">
+        <div class="srl">GitHub Personal Access Token</div>
+        <div class="srs">Settings → Developer settings → Personal access tokens → Fine-grained tokens<br>権限: Contents (Read/Write) + Actions (Read/Write)</div>
+        <div style="display:flex;gap:8px;margin-top:4px">
+          <input class="fi" id="gh-token-input" type="password" placeholder="github_pat_..." style="flex:1;padding:8px 12px;font-size:13px">
+          <button class="sbtn2" onclick="saveToken()">保存</button>
+        </div>
+        <div id="token-status" style="font-size:12px;min-height:16px"></div>
+      </div>
+      <div class="sr" style="cursor:default">
+        <div class="srt">
+          <div class="srl">接続テスト</div>
+          <div class="srs" id="token-test-result">トークンを保存後にテストできます</div>
+        </div>
+        <button class="sbtn2" onclick="testToken()" id="test-btn" style="background:var(--tx2)">テスト</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="ssec">
     <div class="stitle">⚙️ 復習フィルター</div>
     <div class="sc">
       <div class="sr" onclick="setRF('all')"><div class="srt"><div class="srl">すべての単語</div></div><div class="srv" id="rf-all">✓</div></div>
@@ -381,6 +423,7 @@ const VOCAB = [{"id": 1, "word": "So much so that SVO", "meaning_ja": "とても
 const GCID  = '994940387858-2tg6ab5ukicc5ndl1atm1um1j38p3u49.apps.googleusercontent.com';
 const AUTH_EMAIL = 'shoeheyu@gmail.com';
 const ALL_YEARS  = [2025, 2024, 2023, 2022, 2021, 2020];
+const GH_REPO    = 'shuheifuller/english-vocab';
 const POS_L = {noun:'名詞',verb:'動詞',phrasal_verb:'句動詞',adjective:'形容詞',adverb:'副詞',expression:'表現',abbreviation:'略語'};
 
 // ── AUTH (Google SSO only) ─────────────────────
@@ -579,18 +622,111 @@ function chp(p, b) {
   b.classList.add('active');
 }
 
+// ── GITHUB TOKEN ───────────────────────────────
+function getToken() { return localStorage.getItem('gh_token') || ''; }
+function saveToken() {
+  const t = document.getElementById('gh-token-input').value.trim();
+  if (!t) { alert('トークンを入力してください'); return; }
+  localStorage.setItem('gh_token', t);
+  document.getElementById('token-status').textContent = '✓ 保存しました';
+  document.getElementById('token-status').style.color = 'var(--gn)';
+  updAddUI();
+}
+async function testToken() {
+  const t = getToken();
+  if (!t) { alert('トークンを先に保存してください'); return; }
+  const btn = document.getElementById('test-btn');
+  const res = document.getElementById('token-test-result');
+  btn.textContent = '確認中…'; btn.disabled = true;
+  try {
+    const r = await fetch(`https://api.github.com/repos/${GH_REPO}/actions/workflows/add-word.yml`,
+      {headers: {'Authorization': `token ${t}`, 'Accept': 'application/vnd.github+json'}});
+    if (r.ok) {
+      res.textContent = '✓ 接続OK — クラウド追加が使えます';
+      res.style.color = 'var(--gn)';
+    } else {
+      res.textContent = `✗ エラー ${r.status} — トークンまたは権限を確認してください`;
+      res.style.color = 'var(--ac)';
+    }
+  } catch(e) { res.textContent = '✗ 通信エラー: ' + e.message; res.style.color = 'var(--ac)'; }
+  btn.textContent = 'テスト'; btn.disabled = false;
+}
+
 // ── ADD WORD ───────────────────────────────────
-function addW() {
+async function addW() {
   const w = document.getElementById('aw').value.trim();
   if (!w) { alert('単語を入力してください'); return; }
-  const now = new Date();
-  pq.push({word: w, notes: document.getElementById('an').value.trim(),
-            date_added: `${now.getMonth() + 1}/${now.getDate()}`});
-  savQ();
-  document.getElementById('aw').value = '';
-  document.getElementById('an').value = '';
-  alert(`✓ "${w}" をキューに追加しました`);
+  const notes = document.getElementById('an').value.trim();
+  const token = getToken();
+
+  if (token) {
+    // Cloud dispatch via GitHub Actions
+    await dispatchToCloud(w, notes, token);
+  } else {
+    // Fallback: local queue
+    const now = new Date();
+    pq.push({word: w, notes, date_added: `${now.getMonth()+1}/${now.getDate()}`});
+    savQ();
+    document.getElementById('aw').value = '';
+    document.getElementById('an').value = '';
+    alert(`✓ "${w}" をローカルキューに追加しました`);
+  }
 }
+
+async function dispatchToCloud(word, notes, token) {
+  const btn = document.getElementById('add-submit-btn');
+  const statusEl = document.getElementById('dispatch-status');
+  const msgEl = document.getElementById('dispatch-msg');
+
+  btn.textContent = '処理中…'; btn.disabled = true;
+  statusEl.style.display = 'none';
+
+  try {
+    const resp = await fetch(
+      `https://api.github.com/repos/${GH_REPO}/actions/workflows/add-word.yml/dispatches`,
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `token ${token}`,
+          'Accept': 'application/vnd.github+json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ref: 'main', inputs: {word, notes: notes || ''}})
+      }
+    );
+
+    if (resp.status === 204) {
+      document.getElementById('aw').value = '';
+      document.getElementById('an').value = '';
+      msgEl.innerHTML = `☁️ <b>${esc(word)}</b> をクラウドに送信しました！<br>GitHub Actionsで辞書検索・登録・HTML更新が自動実行されます。`;
+      msgEl.style.color = 'var(--gn)';
+      statusEl.style.display = '';
+    } else {
+      const body = await resp.json().catch(() => ({}));
+      msgEl.textContent = `エラー ${resp.status}: ${body.message || '不明なエラー'}`;
+      msgEl.style.color = 'var(--ac)';
+      statusEl.style.display = '';
+    }
+  } catch(e) {
+    msgEl.textContent = '通信エラー: ' + e.message;
+    msgEl.style.color = 'var(--ac)';
+    statusEl.style.display = '';
+  }
+
+  btn.textContent = '追加する →'; btn.disabled = false;
+}
+
+function updAddUI() {
+  const hasToken = !!getToken();
+  document.getElementById('cloud-banner').style.display = hasToken ? 'flex' : 'none';
+  document.getElementById('notoken-banner').style.display = hasToken ? 'none' : '';
+  document.getElementById('add-mode-lbl').textContent = hasToken
+    ? '☁️ GitHubクラウドで自動処理' : '意味・品詞は自動検索されます';
+  // Show token field value (masked)
+  const inp = document.getElementById('gh-token-input');
+  if (inp && hasToken) inp.placeholder = '保存済み（変更する場合は入力してください）';
+}
+
 function remQ(i) { pq.splice(i, 1); savQ(); }
 function updQUI() {
   const n = pq.length;
@@ -711,7 +847,7 @@ function sw(id, btn) {
   document.querySelectorAll('.nb').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   if (id === 'vw')  renW();
-  if (id === 'va')  updQUI();
+  if (id === 'va')  { updQUI(); updAddUI(); }
   if (id === 'vst') {
     renderTrend(); renderDonut(); renderYearTable();
     ['all','new','learning','mastered'].forEach(k =>
@@ -725,7 +861,7 @@ function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').repl
 // ── INIT ───────────────────────────────────────
 function initApp() {
   loadSt();
-  buildDeck(); renW(); updQUI();
+  buildDeck(); renW(); updQUI(); updAddUI();
   setRF(st.revFilter || 'all');
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 }
