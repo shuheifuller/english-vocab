@@ -698,9 +698,14 @@ async function dispatchToCloud(word, notes, token) {
     if (resp.status === 204) {
       document.getElementById('aw').value = '';
       document.getElementById('an').value = '';
-      msgEl.innerHTML = `☁️ <b>${esc(word)}</b> をクラウドに送信しました！<br>GitHub Actionsで辞書検索・登録・HTML更新が自動実行されます。`;
+      msgEl.innerHTML = `☁️ <b>${esc(word)}</b> をクラウドに送信しました！<br>約1〜2分後に自動でリロードします…`;
       msgEl.style.color = 'var(--gn)';
       statusEl.style.display = '';
+      // Auto-reload after 90 seconds to pick up new vocab
+      setTimeout(() => {
+        msgEl.textContent = '更新を確認中…';
+        location.reload();
+      }, 90000);
     } else {
       const body = await resp.json().catch(() => ({}));
       msgEl.textContent = `エラー ${resp.status}: ${body.message || '不明なエラー'}`;

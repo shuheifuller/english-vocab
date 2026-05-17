@@ -51,12 +51,19 @@ jobs:
       - name: Run sync (lookup + regenerate HTML)
         run: python3 sync.py
 
+      - name: Bump service worker cache version
+        run: |
+          # Replace cache version string with a timestamp to force browser cache refresh
+          TIMESTAMP=$(date +%s)
+          sed -i "s/const CACHE = 'vocab-v[^']*'/const CACHE = 'vocab-v$TIMESTAMP'/" sw.js
+          echo "Service worker cache version bumped to vocab-v$TIMESTAMP"
+
       - name: Commit and push
         env:
           WORD: ${{ inputs.word }}
         run: |
           git config user.name  'vocab-bot'
           git config user.email 'vocab-bot@users.noreply.github.com'
-          git add vocab.html vocab_data.json wiki/ raw/
+          git add vocab.html vocab_data.json wiki/ raw/ sw.js
           git diff --staged --quiet || git commit -m "Add: $WORD"
           git push
