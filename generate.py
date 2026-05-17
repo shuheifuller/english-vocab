@@ -385,16 +385,25 @@ textarea.fi{{min-height:80px;resize:vertical;line-height:1.5}}
   <div class="ssec">
     <div class="stitle">☁️ クラウド設定（GitHub Actions）</div>
     <div class="sc">
-      <div class="sr" style="flex-direction:column;align-items:stretch;gap:10px;cursor:default">
+      <!-- Connected state -->
+      <div class="sr" id="token-connected" style="display:none;cursor:default">
+        <div class="srt">
+          <div class="srl" style="color:var(--gn)">✓ GitHub Actions 接続済み</div>
+          <div class="srs">携帯から直接単語を追加できます</div>
+        </div>
+        <button class="sbtn2" style="background:var(--tx2);font-size:11px" onclick="showTokenInput()">変更</button>
+      </div>
+      <!-- Token input (shown when not set or editing) -->
+      <div class="sr" id="token-input-row" style="flex-direction:column;align-items:stretch;gap:10px;cursor:default">
         <div class="srl">GitHub Personal Access Token</div>
-        <div class="srs">Settings → Developer settings → Personal access tokens → Fine-grained tokens<br>権限: Contents (Read/Write) + Actions (Read/Write)</div>
+        <div class="srs">github.com → Settings → Developer settings → Personal access tokens → Fine-grained tokens<br>権限: Contents (Read/Write) + Actions (Read/Write) — リポジトリ: english-vocab</div>
         <div style="display:flex;gap:8px;margin-top:4px">
           <input class="fi" id="gh-token-input" type="password" placeholder="github_pat_..." style="flex:1;padding:8px 12px;font-size:13px">
           <button class="sbtn2" onclick="saveToken()">保存</button>
         </div>
         <div id="token-status" style="font-size:12px;min-height:16px"></div>
       </div>
-      <div class="sr" style="cursor:default">
+      <div class="sr" style="cursor:default" id="test-row">
         <div class="srt">
           <div class="srl">接続テスト</div>
           <div class="srs" id="token-test-result">トークンを保存後にテストできます</div>
@@ -648,14 +657,31 @@ function chp(p, b) {{
 
 // ── GITHUB TOKEN ───────────────────────────────
 function getToken() {{ return localStorage.getItem('gh_token') || ''; }}
+
 function saveToken() {{
   const t = document.getElementById('gh-token-input').value.trim();
   if (!t) {{ alert('トークンを入力してください'); return; }}
   localStorage.setItem('gh_token', t);
+  document.getElementById('gh-token-input').value = '';
   document.getElementById('token-status').textContent = '✓ 保存しました';
   document.getElementById('token-status').style.color = 'var(--gn)';
+  setTimeout(() => updTokenUI(), 800);
   updAddUI();
 }}
+
+function showTokenInput() {{
+  document.getElementById('token-connected').style.display = 'none';
+  document.getElementById('token-input-row').style.display = '';
+  document.getElementById('test-row').style.display = '';
+}}
+
+function updTokenUI() {{
+  const has = !!getToken();
+  document.getElementById('token-connected').style.display = has ? '' : 'none';
+  document.getElementById('token-input-row').style.display = has ? 'none' : '';
+  document.getElementById('test-row').style.display = has ? 'none' : '';
+}}
+
 async function testToken() {{
   const t = getToken();
   if (!t) {{ alert('トークンを先に保存してください'); return; }}
@@ -663,16 +689,21 @@ async function testToken() {{
   const res = document.getElementById('token-test-result');
   btn.textContent = '確認中…'; btn.disabled = true;
   try {{
-    const r = await fetch(`https://api.github.com/repos/${{GH_REPO}}/actions/workflows/add-word.yml`,
+    const r = await fetch(
+      `https://api.github.com/repos/${{GH_REPO}}/actions/workflows/add-word.yml`,
       {{headers: {{'Authorization': `token ${{t}}`, 'Accept': 'application/vnd.github+json'}}}});
     if (r.ok) {{
       res.textContent = '✓ 接続OK — クラウド追加が使えます';
       res.style.color = 'var(--gn)';
+      updTokenUI();
     }} else {{
       res.textContent = `✗ エラー ${{r.status}} — トークンまたは権限を確認してください`;
       res.style.color = 'var(--ac)';
     }}
-  }} catch(e) {{ res.textContent = '✗ 通信エラー: ' + e.message; res.style.color = 'var(--ac)'; }}
+  }} catch(e) {{
+    res.textContent = '✗ 通信エラー: ' + e.message;
+    res.style.color = 'var(--ac)';
+  }}
   btn.textContent = 'テスト'; btn.disabled = false;
 }}
 
@@ -722,9 +753,14 @@ async function dispatchToCloud(word, notes, token) {{
     if (resp.status === 204) {{
       document.getElementById('aw').value = '';
       document.getElementById('an').value = '';
-      msgEl.innerHTML = `☁️ <b>${{esc(word)}}</b> をクラウドに送信しました！<br>GitHub Actionsで辞書検索・登録・HTML更新が自動実行されます。`;
+      msgEl.innerHTML = `☁️ <b>${{esc(word)}}</b> をクラウドに送信しました！<br>約1〜2分後に自動でリロードします…`;
       msgEl.style.color = 'var(--gn)';
       statusEl.style.display = '';
+      // Auto-reload after 90 seconds to pick up new vocab
+      setTimeout(() => {{
+        msgEl.textContent = '更新を確認中…';
+        location.reload();
+      }}, 90000);
     }} else {{
       const body = await resp.json().catch(() => ({{}}));
       msgEl.textContent = `エラー ${{resp.status}}: ${{body.message || '不明なエラー'}}`;
@@ -746,9 +782,6 @@ function updAddUI() {{
   document.getElementById('notoken-banner').style.display = hasToken ? 'none' : '';
   document.getElementById('add-mode-lbl').textContent = hasToken
     ? '☁️ GitHubクラウドで自動処理' : '意味・品詞は自動検索されます';
-  // Show token field value (masked)
-  const inp = document.getElementById('gh-token-input');
-  if (inp && hasToken) inp.placeholder = '保存済み（変更する場合は入力してください）';
 }}
 
 function remQ(i) {{ pq.splice(i, 1); savQ(); }}
@@ -873,7 +906,7 @@ function sw(id, btn) {{
   if (id === 'vw')  renW();
   if (id === 'va')  {{ updQUI(); updAddUI(); }}
   if (id === 'vst') {{
-    renderTrend(); renderDonut(); renderYearTable();
+    renderTrend(); renderDonut(); renderYearTable(); updTokenUI();
     ['all','new','learning','mastered'].forEach(k =>
       document.getElementById('rf-' + k).textContent = (st.revFilter === k) ? '✓' : '');
   }}
@@ -885,7 +918,7 @@ function esc(s) {{ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').rep
 // ── INIT ───────────────────────────────────────
 function initApp() {{
   loadSt();
-  buildDeck(); renW(); updQUI(); updAddUI();
+  buildDeck(); renW(); updQUI(); updAddUI(); updTokenUI();
   setRF(st.revFilter || 'all');
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {{}});
 }}

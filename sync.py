@@ -140,10 +140,19 @@ def process_queue():
         print(f"  Processing: '{word}'")
         en_def, en_example, pos = lookup_dictionary(word)
 
-        # Auto-translate English definition to Japanese
+        # Auto-translate: use definition if found, otherwise translate word directly
         meaning_ja = ""
         if en_def:
             meaning_ja = lookup_translation(en_def)
+            print(f"    Meaning from definition: {meaning_ja[:50]}")
+        else:
+            # Fallback: translate the word/phrase itself
+            meaning_ja = lookup_translation(word)
+            if meaning_ja and meaning_ja.lower() != word.lower():
+                print(f"    Meaning from direct translation: {meaning_ja[:50]}")
+            else:
+                meaning_ja = ""
+                print(f"    No meaning found — please add manually")
 
         # Use dictionary example
         example = en_example
