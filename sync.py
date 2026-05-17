@@ -63,45 +63,140 @@ def detect_pos_from_word(word):
     if re.search(r'(ous|ful|ish|ical|ic|ive|able|ible|ent|ant|al)$', w): return 'adjective'
     return 'noun'
 
-def lookup_dictionary(word):
-    """Fetch English definition, example, and POS from Free Dictionary API."""
-    base_word = word.split()[0].strip("()[]").lower()
-    url = f"https://api.dictionaryapi.dev/api/v2/entries/en/{urllib.parse.quote(base_word)}"
+def _http_get(url, headers=None, timeout=10):
+    """Simple HTTP GET returning parsed JSON or None."""
+    import re as _re
+    h = {'User-Agent': 'VocabApp/1.0 (personal vocabulary tool)'}
+    if headers:
+        h.update(headers)
     try:
-        with urllib.request.urlopen(url, timeout=10) as r:
-            data = json.loads(r.read())
-        if isinstance(data, list) and data:
-            entry = data[0]
-            meanings = entry.get('meanings', [])
-            en_def, example, api_pos = "", "", ""
-            for m in meanings:
-                defs = m.get('definitions', [])
-                if defs:
-                    en_def = defs[0].get('definition', '')
-                    example = defs[0].get('example', '')
-                    api_pos = m.get('partOfSpeech', '')
-                    if en_def:
-                        break
-            # Map API POS to our scheme, then check if phrasal verb
-            pos = POS_MAP.get(api_pos, '') or detect_pos_from_word(word)
+        req = urllib.request.Request(url, headers=h)
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            return json.loads(r.read())
+    except Exception:
+        return None
+
+
+def lookup_free_dictionary(word):
+    """Free Dictionary API — best for standard English words."""
+    base = word.split()[0].strip("()[]").lower()
+    data = _http_get(f"https://api.dictionaryapi.dev/api/v2/entries/en/{urllib.parse.quote(base)}")
+    if not isinstance(data, list) or not data:
+        return "", "", ""
+    meanings = data[0].get('meanings', [])
+    for m in meanings:
+        defs = m.get('definitions', [])
+        if defs:
+            pos = POS_MAP.get(m.get('partOfSpeech', ''), '') or detect_pos_from_word(word)
             if pos == 'verb' and len(word.split()) > 1:
                 pos = 'phrasal_verb'
-            return en_def, example, pos
-    except Exception as e:
-        print(f"  Dictionary API error for '{word}': {e}")
-    return "", "", detect_pos_from_word(word)
+            return defs[0].get('definition', ''), defs[0].get('example', ''), pos
+    return "", "", ""
+
+
+def lookup_urban_dictionary(word):
+    """Urban Dictionary — best for slang, informal, and neologisms."""
+    import re
+    data = _http_get(f"https://api.urbandictionary.com/v0/define?term={urllib.parse.quote(word)}")
+    if not data:
+        return "", ""
+    entries = sorted(data.get('list', []), key=lambda x: x.get('thumbs_up', 0), reverse=True)
+    if not entries:
+        return "", ""
+    best = entries[0]
+    def clean_ud(s):
+        if not s: return ""
+        s = re.sub(r'\[([^\]]+)\]', r'\1', s)   # remove [linked word] brackets
+        s = re.sub(r'\|[^|]+\|', '', s)          # remove IPA |phonetics|
+        s = re.sub(r'\n+(noun|verb|adjective|adverb|abbreviation)\n+', ' ', s, flags=re.I)
+        s = re.sub(r'\s+', ' ', s).strip()
+        # Take first sentence/line only if definition is too long
+        first = re.split(r'(?<=[.!?])\s', s)[0]
+        return first if len(first) > 20 else s[:300]
+    definition = clean_ud(best.get('definition', ''))
+    example    = re.sub(r'\[([^\]]+)\]', r'\1', best.get('example', '') or '').strip()
+    return definition, example
+
+
+def lookup_wikipedia(word):
+    """Wikipedia summary — good for proper nouns, technical terms, cultural references."""
+    slug = urllib.parse.quote(word.replace(' ', '_'))
+    data = _http_get(f"https://en.wikipedia.org/api/rest_v1/page/summary/{slug}")
+    if not data or data.get('type') in ('disambiguation', 'https://mediawiki.org/wiki/HyperSwitch/errors/not_found'):
+        return "", ""
+    extract = data.get('extract', '')
+    if not extract:
+        return "", ""
+    # Use first sentence only
+    first = extract.split('.')[0].strip() + '.'
+    return first, ""
+
+
+def lookup_duckduckgo(word):
+    """DuckDuckGo Instant Answers — broad coverage fallback."""
+    params = urllib.parse.urlencode({'q': f'define {word}', 'format': 'json', 'no_redirect': '1'})
+    data = _http_get(f"https://api.duckduckgo.com/?{params}")
+    if not data:
+        return "", ""
+    definition = data.get('Abstract') or data.get('Definition') or ''
+    return definition.strip(), ""
+
+
+def lookup_word(word):
+    """
+    Multi-source lookup in order:
+    - Single words:         Free Dictionary → Urban Dictionary → Wikipedia → DuckDuckGo
+    - Multi-word phrases:   Urban Dictionary → Free Dictionary → Wikipedia → DuckDuckGo
+    Returns (en_def, example, pos)
+    """
+    pos = detect_pos_from_word(word)
+    is_phrase = len(word.split()) > 1
+
+    sources = [
+        ("Urban Dictionary", lookup_urban_dictionary),
+        ("Free Dictionary",  lambda w: lookup_free_dictionary(w)[:2]),
+        ("Wikipedia",        lookup_wikipedia),
+        ("DuckDuckGo",       lookup_duckduckgo),
+    ] if is_phrase else [
+        ("Free Dictionary",  lambda w: lookup_free_dictionary(w)[:2]),
+        ("Urban Dictionary", lookup_urban_dictionary),
+        ("Wikipedia",        lookup_wikipedia),
+        ("DuckDuckGo",       lookup_duckduckgo),
+    ]
+
+    for name, fn in sources:
+        result = fn(word)
+        definition = result[0] if result else ""
+        example    = result[1] if len(result) > 1 else ""
+        if definition:
+            print(f"    Source: {name}")
+            # For Free Dictionary, also get POS
+            if name == "Free Dictionary":
+                _, _, api_pos = lookup_free_dictionary(word)
+                return definition, example, api_pos or pos
+            return definition, example, pos
+        print(f"    {name}: not found, trying next…")
+
+    print(f"    No definition found in any source")
+    return "", "", pos
 
 
 def lookup_translation(text):
-    """Get Japanese translation using MyMemory API."""
+    """Get Japanese translation using MyMemory API (max 450 chars)."""
     if not text:
         return ""
+    # Truncate to avoid API limit (500 chars)
+    text = text[:450]
     params = urllib.parse.urlencode({'q': text, 'langpair': 'en|ja'})
     url = f"https://api.mymemory.translated.net/get?{params}"
     try:
         with urllib.request.urlopen(url, timeout=10) as r:
             data = json.loads(r.read())
-        return data.get('responseData', {}).get('translatedText', '')
+        result = data.get('responseData', {}).get('translatedText', '')
+        # MyMemory returns error message as translatedText when limit exceeded
+        if 'QUERY LENGTH LIMIT' in result or 'MYMEMORY WARNING' in result:
+            return ""
+        return result
     except Exception as e:
         print(f"  Translation API error: {e}")
     return ""
@@ -138,21 +233,15 @@ def process_queue():
             continue
 
         print(f"  Processing: '{word}'")
-        en_def, en_example, pos = lookup_dictionary(word)
+        en_def, en_example, pos = lookup_word(word)
 
-        # Auto-translate: use definition if found, otherwise translate word directly
+        # Translate English definition to Japanese
         meaning_ja = ""
         if en_def:
             meaning_ja = lookup_translation(en_def)
-            print(f"    Meaning from definition: {meaning_ja[:50]}")
+            print(f"    JA: {meaning_ja[:60]}")
         else:
-            # Fallback: translate the word/phrase itself
-            meaning_ja = lookup_translation(word)
-            if meaning_ja and meaning_ja.lower() != word.lower():
-                print(f"    Meaning from direct translation: {meaning_ja[:50]}")
-            else:
-                meaning_ja = ""
-                print(f"    No meaning found — please add manually")
+            print(f"    No definition found — meaning left blank for manual entry")
 
         # Use dictionary example
         example = en_example
