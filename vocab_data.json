@@ -4942,5 +4942,17 @@
     "year": 2026,
     "pos": "noun",
     "mastery": "new"
+  },
+  {
+    "id": 413,
+    "word": "In hindsight",
+    "meaning_ja": "イベントを振り返って、それがどんなに間違っていても、それはまだ公平な経験だったと思うとき",
+    "english_def": "When looking back at an event and thinking that no matter how wrong it went, it was still a fair experience",
+    "example": "‘It’s all fair in hindsight!’\n\n‘Dude you’re the only person I know who’s injured themselves in an Ambulance’",
+    "notes": "It's easy to say in hindsight.（あとから言うのは簡単だ。／結果論にすぎない。）",
+    "date_added": "5/17",
+    "year": 2026,
+    "pos": "expression",
+    "mastery": "new"
   }
 ]
