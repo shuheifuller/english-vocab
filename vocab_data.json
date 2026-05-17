@@ -4954,5 +4954,17 @@
     "year": 2026,
     "pos": "expression",
     "mastery": "new"
+  },
+  {
+    "id": 414,
+    "word": "Erection",
+    "meaning_ja": "何かを構築したり、組み立てたり、まとめたりする行為。",
+    "english_def": "The act of building or putting up or together of something.",
+    "example": "",
+    "notes": "Have a morning erection",
+    "date_added": "5/17",
+    "year": 2026,
+    "pos": "noun",
+    "mastery": "new"
   }
 ]
