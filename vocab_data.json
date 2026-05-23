@@ -4978,5 +4978,17 @@
     "year": 2026,
     "pos": "noun",
     "mastery": "new"
+  },
+  {
+    "id": 416,
+    "word": "Forge",
+    "meaning_ja": "金属をハンマーで打つ前に加熱する炉または囲炉裏。",
+    "english_def": "Furnace or hearth where metals are heated prior to hammering them into shape.",
+    "example": "",
+    "notes": "",
+    "date_added": "5/23",
+    "year": 2026,
+    "pos": "noun",
+    "mastery": "new"
   }
 ]
