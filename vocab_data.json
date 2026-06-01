@@ -4990,5 +4990,17 @@
     "year": 2026,
     "pos": "noun",
     "mastery": "new"
+  },
+  {
+    "id": 417,
+    "word": "Exhibited",
+    "meaning_ja": "特に展覧会やコンテストで、他の人が見るために（何か）を表示または表示すること。",
+    "english_def": "To display or show (something) for others to see, especially at an exhibition or contest.",
+    "example": "He wanted to exhibit his baseball cards.",
+    "notes": "Sidney said “Exhibited” to me when I said “I’m not technical”",
+    "date_added": "6/1",
+    "year": 2026,
+    "pos": "verb",
+    "mastery": "new"
   }
 ]
