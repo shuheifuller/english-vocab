@@ -5002,5 +5002,17 @@
     "year": 2026,
     "pos": "verb",
     "mastery": "new"
+  },
+  {
+    "id": 418,
+    "word": "Shy of",
+    "meaning_ja": "愚かで、密度が高く、無知である",
+    "english_def": "stupid, dense, lacking intelegence",
+    "example": "The poor guy must be three bricks shy of a load.",
+    "notes": "While Ohtani boasts a spectacular 0.74 ERA, he has only pitched 61 innings across 10 starts. He sits just shy of the qualification line (requiring roughly 57–60 innings depending on the exact day) to appear on the official leaderboard.",
+    "date_added": "6/4",
+    "year": 2026,
+    "pos": "expression",
+    "mastery": "new"
   }
 ]
