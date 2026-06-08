@@ -1,5 +1,5 @@
 // Cache version — bump this to force cache invalidation on deploy
-const CACHE = 'vocab-v1780579046';
+const CACHE = 'vocab-v1780917304';
 const FILES = ['vocab.html', 'manifest.json'];
 
 self.addEventListener('install', e => {

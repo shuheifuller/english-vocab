@@ -5014,5 +5014,17 @@
     "year": 2026,
     "pos": "expression",
     "mastery": "new"
+  },
+  {
+    "id": 419,
+    "word": "Larrican",
+    "meaning_ja": "ラリーの信奉者。",
+    "english_def": "A follower of Larry.",
+    "example": "Joel: Yesterday after hearing Larry speak, I was Larrified and now I've become a Larrian.\r\nJustin: Well done, well done. L(-.-L)\r\nJoel: L(-.-L)",
+    "notes": "",
+    "date_added": "6/8",
+    "year": 2026,
+    "pos": "noun",
+    "mastery": "new"
   }
 ]
