@@ -5026,5 +5026,17 @@
     "year": 2026,
     "pos": "noun",
     "mastery": "new"
+  },
+  {
+    "id": 420,
+    "word": "Man overboard",
+    "meaning_ja": "人の鼻孔からはっきりと見えるようにぶら下がっているブーガー。",
+    "english_def": "A booger dangling in plain view from a person's nostril.",
+    "example": "Psst, Errol! (tapping one's own upper lip) Ya gotta man overboard. (Errol wipes)",
+    "notes": "Person onboard fell down from a boat",
+    "date_added": "6/13",
+    "year": 2026,
+    "pos": "expression",
+    "mastery": "new"
   }
 ]
