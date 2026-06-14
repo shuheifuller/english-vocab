@@ -5038,5 +5038,17 @@
     "year": 2026,
     "pos": "expression",
     "mastery": "new"
+  },
+  {
+    "id": 421,
+    "word": "Give someone an olive branch",
+    "meaning_ja": "力が加えられたときに何かが受ける曲げの量。圧力下で降伏する傾向。弾力性。",
+    "english_def": "The amount of bending that something undergoes when a force is applied to it; a tendency to yield under pressure; resilence.",
+    "example": "There is no give in his dogmatic religious beliefs.",
+    "notes": "",
+    "date_added": "6/14",
+    "year": 2026,
+    "pos": "noun",
+    "mastery": "new"
   }
 ]
