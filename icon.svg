@@ -1,22 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024" fill="none">
-  <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#23262f"/>
-      <stop offset="1" stop-color="#15171e"/>
-    </linearGradient>
-    <radialGradient id="lift" cx="50%" cy="48%" r="46%">
-      <stop offset="0" stop-color="#3a3f4d" stop-opacity="0.5"/>
-      <stop offset="1" stop-color="#3a3f4d" stop-opacity="0"/>
-    </radialGradient>
-  </defs>
+  <!-- White background -->
+  <rect width="1024" height="1024" fill="#ffffff"/>
 
-  <!-- Muted dark background -->
-  <rect width="1024" height="1024" fill="url(#bg)"/>
-  <!-- Very subtle lift so the silhouette reads without a loud glow -->
-  <circle cx="512" cy="500" r="430" fill="url(#lift)"/>
-
-  <!-- Minimal sitting black cat -->
-  <g fill="#0e0f16">
+  <!-- Solid black sitting-cat silhouette (no eyes, no nose) -->
+  <g fill="#141414" transform="translate(512 488) scale(1.2) translate(-512 -488)">
     <!-- Tail (soft curl, lower right) -->
     <path d="M648 716 C744 710 776 598 708 556 C687 543 666 560 679 589 C691 616 672 662 634 690 Z"/>
     <!-- Body (sitting) -->
@@ -26,22 +13,5 @@
     <path d="M594 312 L572 182 L476 300 Z"/>
     <!-- Head -->
     <circle cx="512" cy="378" r="108"/>
-  </g>
-
-  <!-- Understated eyes (muted, not glowing) -->
-  <g opacity="0.92">
-    <ellipse cx="476" cy="374" rx="13.5" ry="18" fill="#b9ab82"/>
-    <ellipse cx="548" cy="374" rx="13.5" ry="18" fill="#b9ab82"/>
-    <ellipse cx="476" cy="375" rx="5" ry="16" fill="#0e0f16"/>
-    <ellipse cx="548" cy="375" rx="5" ry="16" fill="#0e0f16"/>
-  </g>
-  <!-- Tiny nose -->
-  <path d="M505 408 L519 408 L512 416 Z" fill="#7e6a6a"/>
-  <!-- Whiskers (very subtle) -->
-  <g stroke="#4a4e5c" stroke-width="2.4" stroke-linecap="round" opacity="0.55">
-    <line x1="402" y1="404" x2="470" y2="412"/>
-    <line x1="400" y1="430" x2="470" y2="428"/>
-    <line x1="622" y1="404" x2="554" y2="412"/>
-    <line x1="624" y1="430" x2="554" y2="428"/>
   </g>
 </svg>
