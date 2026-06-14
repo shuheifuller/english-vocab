@@ -1,0 +1,88 @@
+name: Edit Vocabulary Word
+
+on:
+  workflow_dispatch:
+    inputs:
+      id:
+        description: 'ID of the word to edit'
+        required: true
+      meaning_ja:
+        description: 'Japanese meaning'
+        required: false
+        default: ''
+      example:
+        description: 'Example sentence'
+        required: false
+        default: ''
+      notes:
+        description: 'Memo / Note'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+jobs:
+  edit-word:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Update vocab_data.json
+        env:
+          WID: ${{ inputs.id }}
+          MEANING: ${{ inputs.meaning_ja }}
+          EXAMPLE: ${{ inputs.example }}
+          NOTES: ${{ inputs.notes }}
+        run: |
+          python3 - <<'PYEOF'
+          import json, os, sys
+
+          wid = int(os.environ['WID'])
+          meaning = os.environ.get('MEANING', '')
+          example = os.environ.get('EXAMPLE', '')
+          notes   = os.environ.get('NOTES', '')
+
+          with open('vocab_data.json', encoding='utf-8') as f:
+              vocab = json.load(f)
+
+          entry = next((e for e in vocab if e.get('id') == wid), None)
+          if entry is None:
+              print(f"::error::No entry with id {wid}")
+              sys.exit(1)
+
+          # Only these three fields are editable; every other field
+          # (esp. mastery, word, date_added, year, pos) is preserved.
+          entry['meaning_ja'] = meaning
+          entry['example']    = example
+          entry['notes']      = notes
+
+          with open('vocab_data.json', 'w', encoding='utf-8') as f:
+              json.dump(vocab, f, ensure_ascii=False, indent=2)
+          print(f"Updated id {wid}: {entry.get('word')}")
+          PYEOF
+
+      - name: Regenerate HTML
+        run: python3 generate.py
+
+      - name: Bump service worker cache version
+        run: |
+          TIMESTAMP=$(date +%s)
+          sed -i "s/const CACHE = 'vocab-v[^']*'/const CACHE = 'vocab-v$TIMESTAMP'/" sw.js
+          echo "Service worker cache version bumped to vocab-v$TIMESTAMP"
+
+      - name: Commit and push
+        env:
+          WID: ${{ inputs.id }}
+        run: |
+          git config user.name  'vocab-bot'
+          git config user.email 'vocab-bot@users.noreply.github.com'
+          git add vocab.html vocab_data.json sw.js
+          git diff --staged --quiet || git commit -m "Edit: id $WID"
+          git push

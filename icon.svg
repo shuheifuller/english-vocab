@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1a1a2e"/>
+      <stop offset="1" stop-color="#0b0b16"/>
+    </linearGradient>
+    <radialGradient id="moon" cx="50%" cy="42%" r="42%">
+      <stop offset="0" stop-color="#fde9b8" stop-opacity="0.95"/>
+      <stop offset="0.45" stop-color="#f6c768" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#f59e0b" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="eye" cx="50%" cy="40%" r="60%">
+      <stop offset="0" stop-color="#ffd97a"/>
+      <stop offset="1" stop-color="#f59e0b"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1024" height="1024" fill="url(#bg)"/>
+  <!-- Moon glow for contrast behind the black cat -->
+  <circle cx="512" cy="430" r="360" fill="url(#moon)"/>
+
+  <!-- Black cat (scaled & centred from the app mascot, original viewBox 0 0 120 120) -->
+  <g transform="translate(512 540) scale(7.2) translate(-62 -60)">
+    <!-- Tail -->
+    <path d="M38 105 Q18 118 22 105 Q26 90 40 92" stroke="#16161f" stroke-width="11" stroke-linecap="round" fill="none"/>
+    <!-- Body -->
+    <ellipse cx="62" cy="88" rx="32" ry="26" fill="#16161f"/>
+    <!-- Neck / chest -->
+    <ellipse cx="62" cy="70" rx="18" ry="14" fill="#16161f"/>
+    <!-- Head -->
+    <circle cx="62" cy="52" r="28" fill="#16161f"/>
+    <!-- Left ear outer -->
+    <polygon points="36,34 42,12 56,36" fill="#16161f"/>
+    <!-- Right ear outer -->
+    <polygon points="68,36 78,12 84,34" fill="#16161f"/>
+    <!-- Left ear inner -->
+    <polygon points="39,32 44,17 54,34" fill="#e94560" opacity="0.55"/>
+    <!-- Right ear inner -->
+    <polygon points="70,34 77,17 81,32" fill="#e94560" opacity="0.55"/>
+    <!-- Left eye (amber, glowing) -->
+    <ellipse cx="50" cy="50" rx="8" ry="9" fill="url(#eye)"/>
+    <ellipse cx="50" cy="50" rx="3.5" ry="8" fill="#0b0b18"/>
+    <circle cx="47" cy="45" r="2" fill="white" opacity="0.95"/>
+    <!-- Right eye (amber, glowing) -->
+    <ellipse cx="74" cy="50" rx="8" ry="9" fill="url(#eye)"/>
+    <ellipse cx="74" cy="50" rx="3.5" ry="8" fill="#0b0b18"/>
+    <circle cx="71" cy="45" r="2" fill="white" opacity="0.95"/>
+    <!-- Nose -->
+    <polygon points="59,62 65,62 62,65.5" fill="#e94560"/>
+    <!-- Mouth -->
+    <path d="M58,66 Q62,70 66,66" stroke="#6b6b80" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+    <!-- Whiskers left -->
+    <line x1="20" y1="59" x2="50" y2="62" stroke="#c9d1e8" stroke-width="1" opacity="0.7"/>
+    <line x1="20" y1="65" x2="50" y2="65" stroke="#c9d1e8" stroke-width="1" opacity="0.7"/>
+    <!-- Whiskers right -->
+    <line x1="104" y1="59" x2="74" y2="62" stroke="#c9d1e8" stroke-width="1" opacity="0.7"/>
+    <line x1="104" y1="65" x2="74" y2="65" stroke="#c9d1e8" stroke-width="1" opacity="0.7"/>
+    <!-- Paws -->
+    <ellipse cx="48" cy="112" rx="10" ry="6" fill="#16161f"/>
+    <ellipse cx="76" cy="112" rx="10" ry="6" fill="#16161f"/>
+  </g>
+</svg>

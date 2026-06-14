@@ -32,6 +32,9 @@ def generate(vocab, cfg):
 <meta name="theme-color" content="#0f0f1a">
 <title>英語単語帳</title>
 <link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<meta name="apple-mobile-web-app-title" content="単語帳">
 <style>
 *,*::before,*::after{{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}}
 :root{{
@@ -196,6 +199,30 @@ textarea.fi{{min-height:80px;resize:vertical;line-height:1.5}}
 .wim{{font-size:12px;color:var(--tx2);margin-top:5px;line-height:1.5}}
 .wie{{font-size:11px;color:var(--tx2);margin-top:3px;font-style:italic;line-height:1.4}}
 .ptag{{display:inline-block;font-size:9px;padding:2px 7px;border-radius:6px;font-weight:700;margin-top:4px;background:var(--sf2);color:var(--tx2)}}
+.win{{font-size:11px;color:var(--tx2);margin-top:6px;line-height:1.5;border-left:2px solid var(--pu);padding-left:8px}}
+.winl{{display:inline-block;font-size:9px;font-weight:700;color:var(--pu);margin-right:6px;text-transform:uppercase;letter-spacing:.04em}}
+.wirow{{display:flex;align-items:center;justify-content:space-between;margin-top:6px}}
+.wedit{{font-size:10px;font-weight:700;color:var(--tx2);background:var(--sf2);border:1px solid var(--bd);border-radius:8px;padding:3px 10px;cursor:pointer}}
+.wedit:active{{opacity:.6}}
+
+/* ── EDIT MODAL ───────────────────────────────── */
+.modal{{position:fixed;inset:0;z-index:200;display:none;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.55);padding-bottom:0}}
+.modal.show{{display:flex}}
+.modal-card{{width:100%;max-width:560px;background:var(--sf);border-top-left-radius:20px;border-top-right-radius:20px;border:1px solid var(--bd);padding:18px 16px calc(20px + var(--sb));max-height:90%;overflow-y:auto}}
+.modal-h{{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}}
+.modal-t{{font-size:16px;font-weight:800}}
+.modal-w{{font-size:13px;color:var(--ac);font-weight:700}}
+.modal-x{{font-size:22px;line-height:1;color:var(--tx2);background:none;border:none;cursor:pointer;padding:4px}}
+.efld{{margin-bottom:14px}}
+.elbl{{display:block;font-size:11px;font-weight:700;color:var(--tx2);margin-bottom:6px}}
+.eti{{width:100%;background:var(--bg);color:var(--tx);border:1px solid var(--bd);border-radius:10px;padding:10px 12px;font-size:14px;font-family:inherit;line-height:1.5;resize:vertical;min-height:46px}}
+.eti:focus{{outline:none;border-color:var(--ac)}}
+.ebtns{{display:flex;gap:10px;margin-top:6px}}
+.ebtn{{flex:1;padding:12px;border-radius:12px;font-size:14px;font-weight:700;border:none;cursor:pointer}}
+.ebtn.save{{background:var(--ac);color:#fff}}
+.ebtn.cancel{{background:var(--sf2);color:var(--tx2)}}
+.ebtn:disabled{{opacity:.5}}
+.emsg{{font-size:12px;margin-top:10px;line-height:1.5}}
 
 /* ── STATS ────────────────────────────────────── */
 #vst{{padding-bottom:40px}}
@@ -528,6 +555,36 @@ textarea.fi{{min-height:80px;resize:vertical;line-height:1.5}}
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>統計
   </button>
 </nav>
+
+<!-- Edit word modal -->
+<div class="modal" id="edit-modal">
+  <div class="modal-card">
+    <div class="modal-h">
+      <div>
+        <div class="modal-t">編集</div>
+        <div class="modal-w" id="ed-word"></div>
+      </div>
+      <button class="modal-x" onclick="closeEdit()">×</button>
+    </div>
+    <div class="efld">
+      <label class="elbl">意味（日本語）</label>
+      <textarea class="eti" id="ed-meaning" rows="2"></textarea>
+    </div>
+    <div class="efld">
+      <label class="elbl">例文</label>
+      <textarea class="eti" id="ed-example" rows="3"></textarea>
+    </div>
+    <div class="efld">
+      <label class="elbl">メモ / Note</label>
+      <textarea class="eti" id="ed-notes" rows="2"></textarea>
+    </div>
+    <div class="ebtns">
+      <button class="ebtn cancel" onclick="closeEdit()">キャンセル</button>
+      <button class="ebtn save" id="ed-save-btn" onclick="saveEdit()">保存する →</button>
+    </div>
+    <div class="emsg" id="ed-msg" style="display:none"></div>
+  </div>
+</div>
 </div><!-- /app -->
 
 <script>
@@ -690,7 +747,8 @@ function filt() {{
     l = l.filter(c =>
       c.word.toLowerCase().includes(q) ||
       (c.meaning_ja || '').includes(q) ||
-      (c.example || '').toLowerCase().includes(q));
+      (c.example || '').toLowerCase().includes(q) ||
+      (c.notes || '').toLowerCase().includes(q));
   }}
   return wf.sortNew ? [...l].reverse() : l;
 }}
@@ -715,7 +773,11 @@ function renW() {{
       </div>
       ${{c.meaning_ja ? `<div class="wim">${{esc(c.meaning_ja)}}</div>` : ''}}
       ${{c.example    ? `<div class="wie">${{esc(c.example)}}</div>`    : ''}}
-      ${{pl           ? `<span class="ptag">${{pl}}</span>`             : ''}}
+      ${{c.notes      ? `<div class="win"><span class="winl">Note</span>${{esc(c.notes)}}</div>` : ''}}
+      <div class="wirow">
+        ${{pl ? `<span class="ptag">${{pl}}</span>` : '<span></span>'}}
+        <button class="wedit" onclick="openEdit(${{c.id}})">✎ 編集</button>
+      </div>
     </div>`;
   }}).join('');
 }}
@@ -732,6 +794,87 @@ function chp(p, b) {{
   const el = typeof p === 'string' ? document.getElementById(p) : p;
   if (el) el.querySelectorAll('.chip').forEach(x => x.classList.remove('active'));
   b.classList.add('active');
+}}
+
+// ── EDIT WORD ──────────────────────────────────
+let editingId = null;
+function openEdit(id) {{
+  const c = VOCAB.find(v => v.id === id);
+  if (!c) return;
+  editingId = id;
+  document.getElementById('ed-word').textContent = c.word;
+  document.getElementById('ed-meaning').value = c.meaning_ja || '';
+  document.getElementById('ed-example').value = c.example || '';
+  document.getElementById('ed-notes').value   = c.notes || '';
+  document.getElementById('ed-msg').style.display = 'none';
+  document.getElementById('edit-modal').classList.add('show');
+}}
+function closeEdit() {{
+  document.getElementById('edit-modal').classList.remove('show');
+  editingId = null;
+}}
+// Tap on the dark backdrop closes the modal
+document.getElementById('edit-modal').addEventListener('click', e => {{
+  if (e.target.id === 'edit-modal') closeEdit();
+}});
+async function saveEdit() {{
+  if (editingId == null) return;
+  const meaning_ja = document.getElementById('ed-meaning').value.trim();
+  const example    = document.getElementById('ed-example').value.trim();
+  const notes      = document.getElementById('ed-notes').value.trim();
+  const token = getToken();
+  const msg = document.getElementById('ed-msg');
+  if (!token) {{
+    msg.innerHTML = '編集を保存するには GitHubトークンが必要です。<br><b>統計タブ → クラウド設定</b>でトークンを登録してください。';
+    msg.style.color = 'var(--ac)';
+    msg.style.display = '';
+    return;
+  }}
+  await dispatchEdit(editingId, meaning_ja, example, notes, token);
+}}
+async function dispatchEdit(id, meaning_ja, example, notes, token) {{
+  const btn = document.getElementById('ed-save-btn');
+  const msg = document.getElementById('ed-msg');
+  btn.textContent = '処理中…'; btn.disabled = true;
+  msg.style.display = 'none';
+  try {{
+    const resp = await fetch(
+      `https://api.github.com/repos/${{GH_REPO}}/actions/workflows/edit-word.yml/dispatches`,
+      {{
+        method: 'POST',
+        headers: {{
+          'Authorization': `token ${{token}}`,
+          'Accept': 'application/vnd.github+json',
+          'Content-Type': 'application/json',
+        }},
+        body: JSON.stringify({{ref: 'main', inputs: {{
+          id: String(id), meaning_ja, example, notes
+        }}}})
+      }}
+    );
+    if (resp.status === 204) {{
+      // Optimistic in-memory update so the change shows immediately
+      const c = VOCAB.find(v => v.id === id);
+      if (c) {{ c.meaning_ja = meaning_ja; c.example = example; c.notes = notes; }}
+      renW();
+      if (deck.length && deck[idx] && deck[idx].id === id) showC();
+      msg.innerHTML = '☁️ 変更をクラウドに送信しました！<br>約1〜2分後に自動でリロードして反映します…';
+      msg.style.color = 'var(--gn)';
+      msg.style.display = '';
+      setTimeout(() => closeEdit(), 1400);
+      setTimeout(() => location.reload(), 90000);
+    }} else {{
+      const body = await resp.json().catch(() => ({{}}));
+      msg.textContent = `エラー ${{resp.status}}: ${{body.message || '不明なエラー'}}`;
+      msg.style.color = 'var(--ac)';
+      msg.style.display = '';
+    }}
+  }} catch(e) {{
+    msg.textContent = '通信エラー: ' + e.message;
+    msg.style.color = 'var(--ac)';
+    msg.style.display = '';
+  }}
+  btn.textContent = '保存する →'; btn.disabled = false;
 }}
 
 // ── GITHUB TOKEN ───────────────────────────────
