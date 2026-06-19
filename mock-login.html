@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Temporary link — MateFC mock login</title>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+         max-width: 480px; margin: 12vh auto; padding: 0 24px; line-height: 1.6;
+         color: #222; text-align: center; }
+  .card { border: 1px solid #e2e2e2; border-radius: 14px; padding: 28px 24px;
+          box-shadow: 0 2px 14px rgba(0,0,0,.06); }
+  a.btn { display: inline-block; margin-top: 14px; padding: 10px 20px;
+          background: #2563eb; color: #fff; border-radius: 8px; text-decoration: none; }
+  .muted { color: #888; font-size: 13px; margin-top: 18px; }
+  .expired { color: #b91c1c; }
+</style>
+<script>
+  // --- Temporary link config -------------------------------------------------
+  // Edit TARGET / EXPIRES_AT to re-issue. EXPIRES_AT is ISO-8601 (local-safe UTC).
+  var TARGET = "https://shuheifuller.github.io/matefc-mock-app/#/login/parent";
+  var EXPIRES_AT = "2026-06-26T23:59:59Z"; // issued 2026-06-19, valid 7 days
+  // ---------------------------------------------------------------------------
+  var expired = Date.now() > Date.parse(EXPIRES_AT);
+  if (!expired) {
+    // Redirect immediately when the link is still valid.
+    location.replace(TARGET);
+  }
+</script>
+</head>
+<body>
+  <div class="card">
+    <noscript>
+      <p>JavaScript is required. <a href="https://shuheifuller.github.io/matefc-mock-app/#/login/parent">Open the page</a>.</p>
+    </noscript>
+    <div id="active" hidden>
+      <h2>Redirecting…</h2>
+      <p>Taking you to the MateFC parent login mock.</p>
+      <a class="btn" href="https://shuheifuller.github.io/matefc-mock-app/#/login/parent">Continue now</a>
+    </div>
+    <div id="gone" hidden>
+      <h2 class="expired">This temporary link has expired</h2>
+      <p>It was valid until <strong>26 Jun 2026</strong>. Please request a new link.</p>
+    </div>
+  </div>
+  <p class="muted" id="meta"></p>
+  <script>
+    document.getElementById(expired ? "gone" : "active").hidden = false;
+    document.getElementById("meta").textContent =
+      "Temporary link · expires 26 Jun 2026 23:59 UTC";
+  </script>
+</body>
+</html>
