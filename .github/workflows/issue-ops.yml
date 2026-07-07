@@ -1,0 +1,161 @@
+name: Vocab Issue Ops
+
+# Token-free write path: the PWA opens a pre-filled GitHub issue and the
+# user submits it while logged into github.com. Only issues opened by the
+# repository owner are processed — that login check IS the auth.
+#
+# Title formats:
+#   [vocab-add] <word>            (body = optional notes, free text)
+#   [vocab-edit] id=<N> <word>    (body = fields delimited by <!--vocab:...--> markers)
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  reject-unauthorized:
+    if: >-
+      startsWith(github.event.issue.title, '[vocab-') &&
+      github.event.issue.user.login != github.repository_owner
+    runs-on: ubuntu-latest
+    steps:
+      - name: Close issue from non-owner
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NUM: ${{ github.event.issue.number }}
+        run: |
+          gh issue close "$NUM" --repo "$GITHUB_REPOSITORY" \
+            --comment "Only the repository owner can add or edit vocabulary words. / このリポジトリのオーナーのみ単語を追加・編集できます。"
+
+  process:
+    if: >-
+      startsWith(github.event.issue.title, '[vocab-') &&
+      github.event.issue.user.login == github.repository_owner
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Parse issue and apply change
+        id: apply
+        env:
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+          ISSUE_BODY: ${{ github.event.issue.body }}
+        run: |
+          python3 - <<'PYEOF'
+          import json, os, re, sys, datetime
+
+          title = os.environ.get('ISSUE_TITLE', '')
+          body  = (os.environ.get('ISSUE_BODY') or '').replace('\r\n', '\n')
+
+          def out(k, v):
+              with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as f:
+                  f.write(f"{k}={v}\n")
+
+          if title.startswith('[vocab-add]'):
+              word = title[len('[vocab-add]'):].strip()
+              if not word:
+                  print('::error::No word found in issue title')
+                  sys.exit(1)
+              now = datetime.date.today()
+              queue = {"entries": [{
+                  "word": word,
+                  "notes": body.strip(),
+                  "date_added": f"{now.month}/{now.day}",
+              }]}
+              with open('raw/queue.json', 'w', encoding='utf-8') as f:
+                  json.dump(queue, f, ensure_ascii=False, indent=2)
+              out('mode', 'add')
+              out('summary', word)
+              print(f"Queued for add: {word}")
+
+          elif title.startswith('[vocab-edit]'):
+              m = re.search(r'id=(\d+)', title)
+              if not m:
+                  print('::error::No id=N found in issue title')
+                  sys.exit(1)
+              wid = int(m.group(1))
+
+              # Fields are delimited by <!--vocab:field--> markers in the body
+              fields = {}
+              parts = re.split(r'<!--vocab:(\w+)-->', body)
+              for i in range(1, len(parts) - 1, 2):
+                  fields[parts[i]] = parts[i + 1].strip()
+
+              with open('vocab_data.json', encoding='utf-8') as f:
+                  vocab = json.load(f)
+              entry = next((e for e in vocab if e.get('id') == wid), None)
+              if entry is None:
+                  print(f"::error::No entry with id {wid}")
+                  sys.exit(1)
+
+              # Only these three fields are editable; everything else
+              # (esp. mastery, word, date_added, year, pos) is preserved.
+              entry['meaning_ja'] = fields.get('meaning_ja', '')
+              entry['example']    = fields.get('example', '')
+              entry['notes']      = fields.get('notes', '')
+
+              with open('vocab_data.json', 'w', encoding='utf-8') as f:
+                  json.dump(vocab, f, ensure_ascii=False, indent=2)
+              out('mode', 'edit')
+              out('summary', f"id {wid}: {entry.get('word')}")
+              print(f"Updated id {wid}: {entry.get('word')}")
+
+          else:
+              print(f"::error::Unrecognized title: {title}")
+              sys.exit(1)
+          PYEOF
+
+      - name: Process add (dictionary lookup + regenerate)
+        if: steps.apply.outputs.mode == 'add'
+        run: python3 sync.py
+
+      - name: Process edit (regenerate HTML)
+        if: steps.apply.outputs.mode == 'edit'
+        run: python3 generate.py
+
+      - name: Bump service worker cache version
+        run: |
+          TIMESTAMP=$(date +%s)
+          sed -i "s/const CACHE = 'vocab-v[^']*'/const CACHE = 'vocab-v$TIMESTAMP'/" sw.js
+          echo "Service worker cache version bumped to vocab-v$TIMESTAMP"
+
+      - name: Commit and push
+        env:
+          MODE: ${{ steps.apply.outputs.mode }}
+          SUMMARY: ${{ steps.apply.outputs.summary }}
+        run: |
+          git config user.name  'vocab-bot'
+          git config user.email 'vocab-bot@users.noreply.github.com'
+          git add vocab.html vocab_data.json wiki/ raw/ sw.js
+          if [ "$MODE" = "add" ]; then MSG="Add: $SUMMARY"; else MSG="Edit: $SUMMARY"; fi
+          git diff --staged --quiet || git commit -m "$MSG"
+          git push
+
+      - name: Close issue (success)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NUM: ${{ github.event.issue.number }}
+          SUMMARY: ${{ steps.apply.outputs.summary }}
+        run: |
+          gh issue close "$NUM" --repo "$GITHUB_REPOSITORY" \
+            --comment "✅ 処理完了: $SUMMARY — 1〜2分後にアプリを開き直すと反映されています。"
+
+      - name: Comment on failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NUM: ${{ github.event.issue.number }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          gh issue comment "$NUM" --repo "$GITHUB_REPOSITORY" \
+            --body "❌ 処理に失敗しました。ログ: $RUN_URL"

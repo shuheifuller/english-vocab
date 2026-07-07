@@ -208,8 +208,8 @@ textarea.fi{min-height:80px;resize:vertical;line-height:1.5}
   <div id="cloud-banner" style="display:none;margin:0 16px 12px;background:rgba(74,222,128,.12);border:1px solid var(--gn);border-radius:10px;padding:10px 14px;font-size:12px;color:var(--gn);display:flex;align-items:center;gap:8px">
     <span>☁️</span><span>GitHub Actionsで自動処理されます</span>
   </div>
-  <div id="notoken-banner" style="margin:0 16px 12px;background:rgba(251,191,36,.1);border:1px solid var(--yw);border-radius:10px;padding:10px 14px;font-size:12px;color:var(--yw)">
-    ⚠️ GitHubトークン未設定。<b>統計タブ → クラウド設定</b>でトークンを登録するとクラウド処理が使えます。
+  <div id="notoken-banner" style="margin:0 16px 12px;background:rgba(167,139,250,.1);border:1px solid var(--pu);border-radius:10px;padding:10px 14px;font-size:12px;color:var(--pu)">
+    🐙 追加するとGitHubのissue画面が開きます。<b>「Submit new issue」</b>を押すだけで自動登録（トークン不要）
   </div>
 
   <div class="fsec">
@@ -360,18 +360,24 @@ textarea.fi{min-height:80px;resize:vertical;line-height:1.5}
   <div class="ssec">
     <div class="stitle">☁️ クラウド設定（GitHub Actions）</div>
     <div class="sc">
+      <div class="sr" style="cursor:default">
+        <div class="srt">
+          <div class="srl" style="color:var(--gn)">✓ トークン不要で使えます</div>
+          <div class="srs">追加・編集はGitHubログインで動作します（issue経由・自動処理）</div>
+        </div>
+      </div>
       <!-- Connected state -->
       <div class="sr" id="token-connected" style="display:none;cursor:default">
         <div class="srt">
-          <div class="srl" style="color:var(--gn)">✓ GitHub Actions 接続済み</div>
-          <div class="srs">携帯から直接単語を追加できます</div>
+          <div class="srl" style="color:var(--gn)">✓ 直接接続モード（トークン設定済み）</div>
+          <div class="srs">issue画面を経由せず、アプリ内から直接送信されます</div>
         </div>
         <button class="sbtn2" style="background:var(--tx2);font-size:11px" onclick="showTokenInput()">変更</button>
       </div>
       <!-- Token input (shown when not set or editing) -->
       <div class="sr" id="token-input-row" style="flex-direction:column;align-items:stretch;gap:10px;cursor:default">
-        <div class="srl">GitHub Personal Access Token</div>
-        <div class="srs">github.com → Settings → Developer settings → Personal access tokens → Fine-grained tokens<br>権限: Contents (Read/Write) + Actions (Read/Write) — リポジトリ: english-vocab</div>
+        <div class="srl">（任意）GitHub Personal Access Token</div>
+        <div class="srs">設定するとissue画面を経由せずアプリ内から直接追加・編集できます。<br>github.com → Settings → Developer settings → Fine-grained tokens<br>権限: Contents (Read/Write) + Actions (Read/Write) — リポジトリ: english-vocab</div>
         <div style="display:flex;gap:8px;margin-top:4px">
           <input class="fi" id="gh-token-input" type="password" placeholder="github_pat_..." style="flex:1;padding:8px 12px;font-size:13px">
           <button class="sbtn2" onclick="saveToken()">保存</button>
@@ -699,14 +705,32 @@ async function saveEdit() {
   const example    = document.getElementById('ed-example').value.trim();
   const notes      = document.getElementById('ed-notes').value.trim();
   const token = getToken();
-  const msg = document.getElementById('ed-msg');
-  if (!token) {
-    msg.innerHTML = '編集を保存するには GitHubトークンが必要です。<br><b>統計タブ → クラウド設定</b>でトークンを登録してください。';
-    msg.style.color = 'var(--ac)';
-    msg.style.display = '';
+  if (token) {
+    await dispatchEdit(editingId, meaning_ja, example, notes, token);
     return;
   }
-  await dispatchEdit(editingId, meaning_ja, example, notes, token);
+  // Token-free path: pre-filled GitHub issue (auth = your GitHub login)
+  const c = VOCAB.find(v => v.id === editingId);
+  const body = `<!--vocab:meaning_ja-->
+${meaning_ja}
+<!--vocab:example-->
+${example}
+<!--vocab:notes-->
+${notes}`;
+  const url = `https://github.com/${GH_REPO}/issues/new` +
+    `?title=${encodeURIComponent(`[vocab-edit] id=${editingId} ${c ? c.word : ''}`)}` +
+    `&body=${encodeURIComponent(body)}`;
+  window.open(url, '_blank');
+  // Optimistic in-memory update so the change shows immediately
+  if (c) { c.meaning_ja = meaning_ja; c.example = example; c.notes = notes; }
+  renW();
+  if (deck.length && deck[idx] && deck[idx].id === editingId) showC();
+  const msg = document.getElementById('ed-msg');
+  msg.innerHTML = '🐙 GitHubが開きました。<b>「Submit new issue」</b>を押すと保存されます。<br>約1〜2分後に自動反映されます。';
+  msg.style.color = 'var(--gn)';
+  msg.style.display = '';
+  setTimeout(() => closeEdit(), 2200);
+  setTimeout(() => location.reload(), 150000);
 }
 async function dispatchEdit(id, meaning_ja, example, notes, token) {
   const btn = document.getElementById('ed-save-btn');
@@ -813,17 +837,35 @@ async function addW() {
   const token = getToken();
 
   if (token) {
-    // Cloud dispatch via GitHub Actions
+    // Direct cloud dispatch via GitHub Actions (optional accelerator)
     await dispatchToCloud(w, notes, token);
-  } else {
-    // Fallback: local queue
+  } else if (navigator.onLine === false) {
+    // Offline: local queue
     const now = new Date();
     pq.push({word: w, notes, date_added: `${now.getMonth()+1}/${now.getDate()}`});
     savQ();
     document.getElementById('aw').value = '';
     document.getElementById('an').value = '';
-    alert(`✓ "${w}" をローカルキューに追加しました`);
+    alert(`✓ オフラインのため "${w}" をローカルキューに保存しました`);
+  } else {
+    // Token-free path: pre-filled GitHub issue (auth = your GitHub login)
+    openAddIssue(w, notes);
   }
+}
+
+function openAddIssue(word, notes) {
+  const url = `https://github.com/${GH_REPO}/issues/new` +
+    `?title=${encodeURIComponent('[vocab-add] ' + word)}` +
+    `&body=${encodeURIComponent(notes)}`;
+  window.open(url, '_blank');
+  document.getElementById('aw').value = '';
+  document.getElementById('an').value = '';
+  const statusEl = document.getElementById('dispatch-status');
+  const msgEl = document.getElementById('dispatch-msg');
+  msgEl.innerHTML = `🐙 GitHubが開きました。<b>「Submit new issue」</b>を押すと<br><b>${esc(word)}</b> が自動登録されます（約1〜2分）`;
+  msgEl.style.color = 'var(--gn)';
+  statusEl.style.display = '';
+  setTimeout(() => { msgEl.textContent = '更新を確認中…'; location.reload(); }, 150000);
 }
 
 async function dispatchToCloud(word, notes, token) {
@@ -879,7 +921,7 @@ function updAddUI() {
   document.getElementById('cloud-banner').style.display = hasToken ? 'flex' : 'none';
   document.getElementById('notoken-banner').style.display = hasToken ? 'none' : '';
   document.getElementById('add-mode-lbl').textContent = hasToken
-    ? '☁️ GitHubクラウドで自動処理' : '意味・品詞は自動検索されます';
+    ? '☁️ GitHubクラウドで自動処理' : '🐙 GitHub経由で自動処理（意味・品詞は自動検索）';
 }
 
 function remQ(i) { pq.splice(i, 1); savQ(); }
