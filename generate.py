@@ -224,14 +224,10 @@ textarea.fi{{min-height:80px;resize:vertical;line-height:1.5}}
 
 <!-- ADD (first / default view) -->
 <div id="va" class="view active">
-  <div class="vh"><div><div class="vtitle">単語を追加</div><div class="vsub" id="add-mode-lbl">意味・品詞はクラウドで自動検索</div></div></div>
+  <div class="vh"><div><div class="vtitle">単語を追加</div><div class="vsub">意味・発音・品詞は自動で調べます</div></div></div>
 
-  <!-- Cloud status banner -->
-  <div id="cloud-banner" style="display:none;margin:0 16px 12px;background:rgba(74,222,128,.12);border:1px solid var(--gn);border-radius:10px;padding:10px 14px;font-size:12px;color:var(--gn);display:flex;align-items:center;gap:8px">
-    <span>☁️</span><span>GitHub Actionsで自動処理されます</span>
-  </div>
-  <div id="notoken-banner" style="margin:0 16px 12px;background:rgba(167,139,250,.1);border:1px solid var(--pu);border-radius:10px;padding:10px 14px;font-size:12px;color:var(--pu)">
-    🐙 追加するとGitHubのissue画面が開きます。<b>「Submit new issue」</b>を押すだけで自動登録（トークン不要）
+  <div style="margin:0 16px 12px;background:rgba(167,139,250,.1);border:1px solid var(--pu);border-radius:10px;padding:10px 14px;font-size:12px;color:var(--pu);line-height:1.6">
+    💡 「追加」を押すと確認ページが開きます。<b>緑の保存ボタン</b>を押すだけで、数分後に単語が登録されます。
   </div>
 
   <div class="fsec">
@@ -246,22 +242,22 @@ textarea.fi{{min-height:80px;resize:vertical;line-height:1.5}}
     <button class="subbtn" id="add-submit-btn" onclick="addW()">追加する →</button>
   </div>
 
-  <!-- Cloud dispatch status -->
+  <!-- Add status -->
   <div id="dispatch-status" style="display:none;margin:0 16px 14px;text-align:center">
     <div id="dispatch-msg" style="font-size:13px;color:var(--tx2)"></div>
-    <div style="font-size:11px;color:var(--tx2);margin-top:6px">数分後にページをリロードすると反映されます</div>
+    <div style="font-size:11px;color:var(--tx2);margin-top:6px">数分後に自動で反映されます</div>
   </div>
 
   <div class="divider"></div>
 
-  <!-- Local queue (fallback) -->
+  <!-- Pending (saved while offline) -->
   <div class="fsec" id="local-queue-section">
-    <div class="stitle">ローカルキュー（<span id="qcnt">0</span>件）</div>
+    <div class="stitle">追加待ち（<span id="qcnt">0</span>件）</div>
     <div id="qempty" class="empty">追加待ちの単語はありません</div>
     <div class="psec" id="plist" style="display:none"></div>
-  </div>
-  <div class="fsec" id="expwrap" style="display:none">
-    <button class="expbtn" onclick="expQ()">📥 queue.json をダウンロード<br><small style="font-weight:400;opacity:.7">raw/queue.json を置き換えて python3 sync.py を実行</small></button>
+    <div id="pending-hint" class="empty" style="display:none;font-size:12px;padding:12px 4px 0;text-align:left;line-height:1.6">
+      オフライン中に保存した単語です。オンラインに戻ったら各単語の<b>「追加」</b>を押すと登録されます。
+    </div>
   </div>
 </div>
 
@@ -345,10 +341,10 @@ textarea.fi{{min-height:80px;resize:vertical;line-height:1.5}}
     <div class="stitle">📖 使い方</div>
     <div class="guide-card">
       <div class="guide-item">
-        <div class="guide-icon">💬</div>
+        <div class="guide-icon">➕</div>
         <div>
-          <div class="guide-title">Claudeに話しかけて追加</div>
-          <div class="guide-body">Claude Code で <span class="guide-code">「reconcileをvocabに追加して」</span> と話しかけるだけ。辞書検索・品詞判定・日本語訳が自動登録されます。</div>
+          <div class="guide-title">「追加」タブから登録</div>
+          <div class="guide-body">単語を入力して「追加」を押し、開いた確認ページで<b>緑の保存ボタン</b>を押すだけ。意味・発音・品詞・日本語訳は自動で調べます。</div>
         </div>
       </div>
       <div class="guide-item">
@@ -377,43 +373,6 @@ textarea.fi{{min-height:80px;resize:vertical;line-height:1.5}}
   <div class="ssec">
     <div class="stitle">📅 年別習熟度</div>
     <table class="yt" id="yt"></table>
-  </div>
-
-  <div class="ssec">
-    <div class="stitle">☁️ クラウド設定（GitHub Actions）</div>
-    <div class="sc">
-      <div class="sr" style="cursor:default">
-        <div class="srt">
-          <div class="srl" style="color:var(--gn)">✓ トークン不要で使えます</div>
-          <div class="srs">追加・編集はGitHubログインで動作します（issue経由・自動処理）</div>
-        </div>
-      </div>
-      <!-- Connected state -->
-      <div class="sr" id="token-connected" style="display:none;cursor:default">
-        <div class="srt">
-          <div class="srl" style="color:var(--gn)">✓ 直接接続モード（トークン設定済み）</div>
-          <div class="srs">issue画面を経由せず、アプリ内から直接送信されます</div>
-        </div>
-        <button class="sbtn2" style="background:var(--tx2);font-size:11px" onclick="showTokenInput()">変更</button>
-      </div>
-      <!-- Token input (shown when not set or editing) -->
-      <div class="sr" id="token-input-row" style="flex-direction:column;align-items:stretch;gap:10px;cursor:default">
-        <div class="srl">（任意）GitHub Personal Access Token</div>
-        <div class="srs">設定するとissue画面を経由せずアプリ内から直接追加・編集できます。<br>github.com → Settings → Developer settings → Fine-grained tokens<br>権限: Contents (Read/Write) + Actions (Read/Write) — リポジトリ: english-vocab</div>
-        <div style="display:flex;gap:8px;margin-top:4px">
-          <input class="fi" id="gh-token-input" type="password" placeholder="github_pat_..." style="flex:1;padding:8px 12px;font-size:13px">
-          <button class="sbtn2" onclick="saveToken()">保存</button>
-        </div>
-        <div id="token-status" style="font-size:12px;min-height:16px"></div>
-      </div>
-      <div class="sr" style="cursor:default" id="test-row">
-        <div class="srt">
-          <div class="srl">接続テスト</div>
-          <div class="srs" id="token-test-result">トークンを保存後にテストできます</div>
-        </div>
-        <button class="sbtn2" onclick="testToken()" id="test-btn" style="background:var(--tx2)">テスト</button>
-      </div>
-    </div>
   </div>
 
   <div class="ssec">
@@ -726,124 +685,22 @@ async function saveEdit() {{
   const meaning_ja = document.getElementById('ed-meaning').value.trim();
   const example    = document.getElementById('ed-example').value.trim();
   const notes      = document.getElementById('ed-notes').value.trim();
-  const token = getToken();
-  if (token) {{
-    await dispatchEdit(editingId, meaning_ja, example, notes, token);
-    return;
-  }}
-  // Token-free path: pre-filled GitHub issue (auth = your GitHub login)
   const c = VOCAB.find(v => v.id === editingId);
   const body = `<!--vocab:meaning_ja-->\n${{meaning_ja}}\n<!--vocab:example-->\n${{example}}\n<!--vocab:notes-->\n${{notes}}`;
   const url = `https://github.com/${{GH_REPO}}/issues/new` +
     `?title=${{encodeURIComponent(`[vocab-edit] id=${{editingId}} ${{c ? c.word : ''}}`)}}` +
     `&body=${{encodeURIComponent(body)}}`;
   window.open(url, '_blank');
-  // Optimistic in-memory update so the change shows immediately
+  // Show the change straight away while it saves in the background
   if (c) {{ c.meaning_ja = meaning_ja; c.example = example; c.notes = notes; }}
   renW();
   if (deck.length && deck[idx] && deck[idx].id === editingId) showC();
   const msg = document.getElementById('ed-msg');
-  msg.innerHTML = '🐙 GitHubが開きました。<b>「Submit new issue」</b>を押すと保存されます。<br>約1〜2分後に自動反映されます。';
+  msg.innerHTML = '✅ 確認ページが開きました。<b>緑の保存ボタン</b>を押すと保存されます。<br>数分後に自動で反映されます。';
   msg.style.color = 'var(--gn)';
   msg.style.display = '';
-  setTimeout(() => closeEdit(), 2200);
+  setTimeout(() => closeEdit(), 2400);
   setTimeout(() => location.reload(), 150000);
-}}
-async function dispatchEdit(id, meaning_ja, example, notes, token) {{
-  const btn = document.getElementById('ed-save-btn');
-  const msg = document.getElementById('ed-msg');
-  btn.textContent = '処理中…'; btn.disabled = true;
-  msg.style.display = 'none';
-  try {{
-    const resp = await fetch(
-      `https://api.github.com/repos/${{GH_REPO}}/actions/workflows/edit-word.yml/dispatches`,
-      {{
-        method: 'POST',
-        headers: {{
-          'Authorization': `token ${{token}}`,
-          'Accept': 'application/vnd.github+json',
-          'Content-Type': 'application/json',
-        }},
-        body: JSON.stringify({{ref: 'main', inputs: {{
-          id: String(id), meaning_ja, example, notes
-        }}}})
-      }}
-    );
-    if (resp.status === 204) {{
-      // Optimistic in-memory update so the change shows immediately
-      const c = VOCAB.find(v => v.id === id);
-      if (c) {{ c.meaning_ja = meaning_ja; c.example = example; c.notes = notes; }}
-      renW();
-      if (deck.length && deck[idx] && deck[idx].id === id) showC();
-      msg.innerHTML = '☁️ 変更をクラウドに送信しました！<br>約1〜2分後に自動でリロードして反映します…';
-      msg.style.color = 'var(--gn)';
-      msg.style.display = '';
-      setTimeout(() => closeEdit(), 1400);
-      setTimeout(() => location.reload(), 90000);
-    }} else {{
-      const body = await resp.json().catch(() => ({{}}));
-      msg.textContent = `エラー ${{resp.status}}: ${{body.message || '不明なエラー'}}`;
-      msg.style.color = 'var(--ac)';
-      msg.style.display = '';
-    }}
-  }} catch(e) {{
-    msg.textContent = '通信エラー: ' + e.message;
-    msg.style.color = 'var(--ac)';
-    msg.style.display = '';
-  }}
-  btn.textContent = '保存する →'; btn.disabled = false;
-}}
-
-// ── GITHUB TOKEN ───────────────────────────────
-function getToken() {{ return localStorage.getItem('gh_token') || ''; }}
-
-function saveToken() {{
-  const t = document.getElementById('gh-token-input').value.trim();
-  if (!t) {{ alert('トークンを入力してください'); return; }}
-  localStorage.setItem('gh_token', t);
-  document.getElementById('gh-token-input').value = '';
-  document.getElementById('token-status').textContent = '✓ 保存しました';
-  document.getElementById('token-status').style.color = 'var(--gn)';
-  setTimeout(() => updTokenUI(), 800);
-  updAddUI();
-}}
-
-function showTokenInput() {{
-  document.getElementById('token-connected').style.display = 'none';
-  document.getElementById('token-input-row').style.display = '';
-  document.getElementById('test-row').style.display = '';
-}}
-
-function updTokenUI() {{
-  const has = !!getToken();
-  document.getElementById('token-connected').style.display = has ? '' : 'none';
-  document.getElementById('token-input-row').style.display = has ? 'none' : '';
-  document.getElementById('test-row').style.display = has ? 'none' : '';
-}}
-
-async function testToken() {{
-  const t = getToken();
-  if (!t) {{ alert('トークンを先に保存してください'); return; }}
-  const btn = document.getElementById('test-btn');
-  const res = document.getElementById('token-test-result');
-  btn.textContent = '確認中…'; btn.disabled = true;
-  try {{
-    const r = await fetch(
-      `https://api.github.com/repos/${{GH_REPO}}/actions/workflows/add-word.yml`,
-      {{headers: {{'Authorization': `token ${{t}}`, 'Accept': 'application/vnd.github+json'}}}});
-    if (r.ok) {{
-      res.textContent = '✓ 接続OK — クラウド追加が使えます';
-      res.style.color = 'var(--gn)';
-      updTokenUI();
-    }} else {{
-      res.textContent = `✗ エラー ${{r.status}} — トークンまたは権限を確認してください`;
-      res.style.color = 'var(--ac)';
-    }}
-  }} catch(e) {{
-    res.textContent = '✗ 通信エラー: ' + e.message;
-    res.style.color = 'var(--ac)';
-  }}
-  btn.textContent = 'テスト'; btn.disabled = false;
 }}
 
 // ── ADD WORD ───────────────────────────────────
@@ -851,21 +708,16 @@ async function addW() {{
   const w = document.getElementById('aw').value.trim();
   if (!w) {{ alert('単語を入力してください'); return; }}
   const notes = document.getElementById('an').value.trim();
-  const token = getToken();
 
-  if (token) {{
-    // Direct cloud dispatch via GitHub Actions (optional accelerator)
-    await dispatchToCloud(w, notes, token);
-  }} else if (navigator.onLine === false) {{
-    // Offline: local queue
+  if (navigator.onLine === false) {{
+    // Offline: keep it safe until you're back online
     const now = new Date();
     pq.push({{word: w, notes, date_added: `${{now.getMonth()+1}}/${{now.getDate()}}`}});
     savQ();
     document.getElementById('aw').value = '';
     document.getElementById('an').value = '';
-    alert(`✓ オフラインのため "${{w}}" をローカルキューに保存しました`);
+    alert(`✓ オフラインのため "${{w}}" を追加待ちに保存しました`);
   }} else {{
-    // Token-free path: pre-filled GitHub issue (auth = your GitHub login)
     openAddIssue(w, notes);
   }}
 }}
@@ -873,75 +725,25 @@ async function addW() {{
 function openAddIssue(word, notes) {{
   const url = `https://github.com/${{GH_REPO}}/issues/new` +
     `?title=${{encodeURIComponent('[vocab-add] ' + word)}}` +
-    `&body=${{encodeURIComponent(notes)}}`;
+    `&body=${{encodeURIComponent(notes || '')}}`;
   window.open(url, '_blank');
   document.getElementById('aw').value = '';
   document.getElementById('an').value = '';
   const statusEl = document.getElementById('dispatch-status');
   const msgEl = document.getElementById('dispatch-msg');
-  msgEl.innerHTML = `🐙 GitHubが開きました。<b>「Submit new issue」</b>を押すと<br><b>${{esc(word)}}</b> が自動登録されます（約1〜2分）`;
+  msgEl.innerHTML = `✅ 確認ページが開きました。<b>緑の保存ボタン</b>を押すと<br><b>${{esc(word)}}</b> が登録されます（数分後に反映）`;
   msgEl.style.color = 'var(--gn)';
   statusEl.style.display = '';
-  setTimeout(() => {{ msgEl.textContent = '更新を確認中…'; location.reload(); }}, 150000);
-}}
-
-async function dispatchToCloud(word, notes, token) {{
-  const btn = document.getElementById('add-submit-btn');
-  const statusEl = document.getElementById('dispatch-status');
-  const msgEl = document.getElementById('dispatch-msg');
-
-  btn.textContent = '処理中…'; btn.disabled = true;
-  statusEl.style.display = 'none';
-
-  try {{
-    const resp = await fetch(
-      `https://api.github.com/repos/${{GH_REPO}}/actions/workflows/add-word.yml/dispatches`,
-      {{
-        method: 'POST',
-        headers: {{
-          'Authorization': `token ${{token}}`,
-          'Accept': 'application/vnd.github+json',
-          'Content-Type': 'application/json',
-        }},
-        body: JSON.stringify({{ref: 'main', inputs: {{word, notes: notes || ''}}}})
-      }}
-    );
-
-    if (resp.status === 204) {{
-      document.getElementById('aw').value = '';
-      document.getElementById('an').value = '';
-      msgEl.innerHTML = `☁️ <b>${{esc(word)}}</b> をクラウドに送信しました！<br>約1〜2分後に自動でリロードします…`;
-      msgEl.style.color = 'var(--gn)';
-      statusEl.style.display = '';
-      // Auto-reload after 90 seconds to pick up new vocab
-      setTimeout(() => {{
-        msgEl.textContent = '更新を確認中…';
-        location.reload();
-      }}, 90000);
-    }} else {{
-      const body = await resp.json().catch(() => ({{}}));
-      msgEl.textContent = `エラー ${{resp.status}}: ${{body.message || '不明なエラー'}}`;
-      msgEl.style.color = 'var(--ac)';
-      statusEl.style.display = '';
-    }}
-  }} catch(e) {{
-    msgEl.textContent = '通信エラー: ' + e.message;
-    msgEl.style.color = 'var(--ac)';
-    statusEl.style.display = '';
-  }}
-
-  btn.textContent = '追加する →'; btn.disabled = false;
-}}
-
-function updAddUI() {{
-  const hasToken = !!getToken();
-  document.getElementById('cloud-banner').style.display = hasToken ? 'flex' : 'none';
-  document.getElementById('notoken-banner').style.display = hasToken ? 'none' : '';
-  document.getElementById('add-mode-lbl').textContent = hasToken
-    ? '☁️ GitHubクラウドで自動処理' : '🐙 GitHub経由で自動処理（意味・品詞は自動検索）';
+  setTimeout(() => {{ msgEl.textContent = '最新の状態を確認中…'; location.reload(); }}, 150000);
 }}
 
 function remQ(i) {{ pq.splice(i, 1); savQ(); }}
+function submitPending(i) {{
+  const q = pq[i];
+  if (!q) return;
+  pq.splice(i, 1); savQ();
+  openAddIssue(q.word, q.notes || '');
+}}
 function updQUI() {{
   const n = pq.length;
   document.getElementById('qcnt').textContent = n;
@@ -950,21 +752,19 @@ function updQUI() {{
   document.getElementById('qempty').style.display = n ? 'none' : '';
   const pl = document.getElementById('plist');
   pl.style.display = n ? '' : 'none';
-  document.getElementById('expwrap').style.display = n ? '' : 'none';
+  const hint = document.getElementById('pending-hint');
+  if (hint) hint.style.display = n ? '' : 'none';
   pl.innerHTML = pq.map((q, i) => `
     <div class="pi">
       <div>
         <div class="piw">${{esc(q.word)}}</div>
         ${{q.notes ? `<div style="font-size:12px;color:var(--tx2)">${{esc(q.notes)}}</div>` : ''}}
       </div>
-      <button class="pdel" onclick="remQ(${{i}})">✕</button>
+      <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+        <button class="sbtn2" style="padding:6px 13px;font-size:12px" onclick="submitPending(${{i}})">追加</button>
+        <button class="pdel" onclick="remQ(${{i}})">✕</button>
+      </div>
     </div>`).join('');
-}}
-function expQ() {{
-  const a = document.createElement('a');
-  a.href = 'data:application/json;charset=utf-8,' +
-    encodeURIComponent(JSON.stringify({{entries: pq}}, null, 2));
-  a.download = 'queue.json'; a.click();
 }}
 
 // ── STATS CHARTS ───────────────────────────────
@@ -1063,9 +863,9 @@ function sw(id, btn) {{
   try {{ localStorage.setItem('lastView', id); }} catch(e) {{}}
   if (id === 'vw')  renW();
   if (id === 'vr')  updSess();
-  if (id === 'va')  {{ updQUI(); updAddUI(); }}
+  if (id === 'va')  {{ updQUI(); }}
   if (id === 'vst') {{
-    renderTrend(); renderDonut(); renderYearTable(); updTokenUI();
+    renderTrend(); renderDonut(); renderYearTable();
     ['all','new','learning','mastered'].forEach(k =>
       document.getElementById('rf-' + k).textContent = (st.revFilter === k) ? '✓' : '');
   }}
@@ -1081,7 +881,7 @@ function esc(s) {{ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').rep
 // ── INIT ───────────────────────────────────────
 function initApp() {{
   loadSt();
-  buildDeck(); renW(); updQUI(); updAddUI(); updTokenUI(); updSess();
+  buildDeck(); renW(); updQUI(); updSess();
   setRF(st.revFilter || 'all');
   // Restore the last tab the user was on (defaults to Add)
   let last = 'va';
