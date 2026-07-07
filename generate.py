@@ -18,8 +18,6 @@ def generate(vocab, cfg):
     total   = len(vocab)
     years   = sorted({v.get("year", 2020) for v in vocab}, reverse=True)
     yrs_js  = json.dumps(years)
-    gcid    = cfg.get("google_client_id", "")
-    gemail  = cfg.get("authorized_email", "")
     gh_repo = cfg.get("github_repo", "shuheifuller/english-vocab")
 
     return f"""<!DOCTYPE html>
@@ -48,56 +46,6 @@ def generate(vocab, cfg):
 }}
 html,body{{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--tx)}}
 #app{{display:flex;flex-direction:column;height:100%;padding-top:var(--st)}}
-
-/* ── LOCK ─────────────────────────────────────── */
-#lock{{
-  position:fixed;inset:0;z-index:999;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:0;padding:40px 24px;overflow:hidden;
-  background:radial-gradient(ellipse at 50% 0%,#1e1b3a 0%,#0b0b18 60%);
-}}
-/* Starfield dots */
-#lock::before{{
-  content:'';position:absolute;inset:0;
-  background-image:
-    radial-gradient(1px 1px at 15% 20%,rgba(255,255,255,.25) 0%,transparent 100%),
-    radial-gradient(1px 1px at 80% 15%,rgba(255,255,255,.2) 0%,transparent 100%),
-    radial-gradient(1.5px 1.5px at 40% 8%,rgba(255,255,255,.3) 0%,transparent 100%),
-    radial-gradient(1px 1px at 65% 35%,rgba(255,255,255,.15) 0%,transparent 100%),
-    radial-gradient(1px 1px at 25% 55%,rgba(255,255,255,.1) 0%,transparent 100%),
-    radial-gradient(1.5px 1.5px at 90% 50%,rgba(255,255,255,.2) 0%,transparent 100%),
-    radial-gradient(1px 1px at 10% 80%,rgba(255,255,255,.15) 0%,transparent 100%),
-    radial-gradient(1px 1px at 55% 75%,rgba(255,255,255,.1) 0%,transparent 100%);
-  pointer-events:none;
-}}
-/* Moon glow behind cat */
-.lock-glow{{
-  width:160px;height:160px;border-radius:50%;margin-bottom:-20px;
-  background:radial-gradient(circle,rgba(233,69,96,.18) 0%,rgba(167,139,250,.12) 50%,transparent 70%);
-  display:flex;align-items:center;justify-content:center;
-  filter:blur(0px);
-}}
-.lock-cat{{width:120px;height:120px;filter:drop-shadow(0 0 18px rgba(245,158,11,.35))}}
-.lock-title{{
-  font-size:22px;font-weight:800;letter-spacing:-.5px;
-  text-align:center;margin-top:20px;margin-bottom:6px;
-  background:linear-gradient(135deg,#fff 30%,#c4b5fd 100%);
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
-  background-clip:text;
-}}
-.lock-sub{{font-size:13px;color:var(--tx2);text-align:center;margin-bottom:28px;line-height:1.6}}
-.g-btn{{
-  display:flex;align-items:center;gap:12px;
-  background:rgba(255,255,255,.95);color:#3c4043;
-  border:none;border-radius:14px;
-  padding:14px 28px;font-size:15px;font-weight:600;
-  cursor:pointer;width:100%;max-width:300px;justify-content:center;
-  transition:transform .15s,box-shadow .2s;font-family:inherit;
-  box-shadow:0 4px 20px rgba(0,0,0,.3);
-}}
-.g-btn:hover{{transform:translateY(-1px);box-shadow:0 6px 24px rgba(0,0,0,.4)}}
-.g-btn:active{{transform:translateY(0)}}
-.lock-err{{color:var(--ac);font-size:12px;text-align:center;min-height:18px;margin-top:12px}}
 
 /* ── NAV ──────────────────────────────────────── */
 #nav{{display:flex;background:var(--sf);border-top:1px solid var(--bd);padding-bottom:var(--sb);flex-shrink:0;order:2}}
@@ -178,6 +126,8 @@ textarea.fi{{min-height:80px;resize:vertical;line-height:1.5}}
 .arr{{display:flex;gap:10px;width:100%;max-width:400px;justify-content:center;margin-top:6px;flex-shrink:0}}
 .arb{{background:var(--sf2);border:1px solid var(--bd);color:var(--tx2);width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px}}
 .arb:active{{background:var(--bd)}}
+.arb.spk{{font-size:20px}}
+.arb.spk.speaking{{background:var(--ac);border-color:var(--ac);color:#fff}}
 .sh{{font-size:10px;color:var(--tx2);text-align:center;margin-top:4px;flex-shrink:0}}
 
 /* ── WORDS ────────────────────────────────────── */
@@ -204,6 +154,9 @@ textarea.fi{{min-height:80px;resize:vertical;line-height:1.5}}
 .wirow{{display:flex;align-items:center;justify-content:space-between;margin-top:6px}}
 .wedit{{font-size:10px;font-weight:700;color:var(--tx2);background:var(--sf2);border:1px solid var(--bd);border-radius:8px;padding:3px 10px;cursor:pointer}}
 .wedit:active{{opacity:.6}}
+.wspk{{background:none;border:none;color:var(--tx2);cursor:pointer;font-size:14px;padding:0 4px;line-height:1;flex-shrink:0;opacity:.65}}
+.wspk:active{{opacity:1;color:var(--ac)}}
+.trunc-note{{text-align:center;padding:12px;color:var(--tx2);font-size:12px}}
 
 /* ── EDIT MODAL ───────────────────────────────── */
 .modal{{position:fixed;inset:0;z-index:200;display:none;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.55);padding-bottom:0}}
@@ -265,70 +218,8 @@ textarea.fi{{min-height:80px;resize:vertical;line-height:1.5}}
 </head>
 <body>
 
-<!-- ═══════════ LOCK (Google SSO only) ═══════════ -->
-<div id="lock">
-  <!-- Black cat illustration -->
-  <div class="lock-glow">
-    <svg class="lock-cat" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <!-- Tail -->
-      <path d="M38 105 Q18 118 22 105 Q26 90 40 92" stroke="#1c1c2e" stroke-width="11" stroke-linecap="round" fill="none"/>
-      <!-- Body -->
-      <ellipse cx="62" cy="88" rx="32" ry="26" fill="#1c1c2e"/>
-      <!-- Neck / chest -->
-      <ellipse cx="62" cy="70" rx="18" ry="14" fill="#1c1c2e"/>
-      <!-- Head -->
-      <circle cx="62" cy="52" r="28" fill="#1c1c2e"/>
-      <!-- Left ear outer -->
-      <polygon points="36,34 42,12 56,36" fill="#1c1c2e"/>
-      <!-- Right ear outer -->
-      <polygon points="68,36 78,12 84,34" fill="#1c1c2e"/>
-      <!-- Left ear inner -->
-      <polygon points="39,32 44,17 54,34" fill="#e94560" opacity="0.5"/>
-      <!-- Right ear inner -->
-      <polygon points="70,34 77,17 81,32" fill="#e94560" opacity="0.5"/>
-      <!-- Left eye (amber, glowing) -->
-      <ellipse cx="50" cy="50" rx="8" ry="9" fill="#f59e0b"/>
-      <ellipse cx="50" cy="50" rx="3.5" ry="8" fill="#0b0b18"/>
-      <circle cx="47" cy="45" r="2" fill="white" opacity="0.9"/>
-      <!-- Right eye (amber, glowing) -->
-      <ellipse cx="74" cy="50" rx="8" ry="9" fill="#f59e0b"/>
-      <ellipse cx="74" cy="50" rx="3.5" ry="8" fill="#0b0b18"/>
-      <circle cx="71" cy="45" r="2" fill="white" opacity="0.9"/>
-      <!-- Nose -->
-      <polygon points="59,62 65,62 62,65.5" fill="#e94560" opacity="0.9"/>
-      <!-- Mouth -->
-      <path d="M58,66 Q62,70 66,66" stroke="#555" stroke-width="1.2" fill="none" stroke-linecap="round"/>
-      <!-- Whiskers left -->
-      <line x1="20" y1="59" x2="50" y2="62" stroke="#8892b0" stroke-width="0.9" opacity="0.7"/>
-      <line x1="20" y1="65" x2="50" y2="65" stroke="#8892b0" stroke-width="0.9" opacity="0.7"/>
-      <!-- Whiskers right -->
-      <line x1="104" y1="59" x2="74" y2="62" stroke="#8892b0" stroke-width="0.9" opacity="0.7"/>
-      <line x1="104" y1="65" x2="74" y2="65" stroke="#8892b0" stroke-width="0.9" opacity="0.7"/>
-      <!-- Chest white patch -->
-      <ellipse cx="62" cy="82" rx="10" ry="8" fill="#1e1e32"/>
-      <!-- Paws -->
-      <ellipse cx="48" cy="112" rx="10" ry="6" fill="#1c1c2e"/>
-      <ellipse cx="76" cy="112" rx="10" ry="6" fill="#1c1c2e"/>
-    </svg>
-  </div>
-
-  <div class="lock-title">Shuhei's EN Vocab App</div>
-  <div class="lock-sub">Your personal English study companion</div>
-
-  <button class="g-btn" id="g-signin-btn" onclick="startGoogleSignIn()">
-    <svg width="18" height="18" viewBox="0 0 18 18">
-      <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/>
-      <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/>
-      <path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/>
-      <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z"/>
-    </svg>
-    Continue with Google
-  </button>
-  <div class="lock-err" id="lock-err"></div>
-</div>
-
 <!-- ═══════════ APP ════════════════════════════════ -->
-<div id="app" style="display:none">
+<div id="app">
 <div id="content">
 
 <!-- ADD (first / default view) -->
@@ -378,7 +269,7 @@ textarea.fi{{min-height:80px;resize:vertical;line-height:1.5}}
 <div id="vr" class="view">
   <div class="pw">
     <div class="pb2"><div class="pf" id="pf" style="width:0%"></div></div>
-    <div class="pl"><span id="pt">{total}件</span><span id="pfl">全て</span></div>
+    <div class="pl"><span id="pt">{total}件</span><span id="sess">✓0 ↺0</span><span id="pfl">全て</span></div>
   </div>
   <div class="cw" id="cw">
     <div class="card" id="card">
@@ -406,9 +297,10 @@ textarea.fi{{min-height:80px;resize:vertical;line-height:1.5}}
   </div>
   <div class="arr">
     <button class="arb" onclick="nav(-1)">←</button>
+    <button class="arb spk" id="spk-btn" onclick="speakCurrent()" title="発音を聞く">🔊</button>
     <button class="arb" onclick="nav(1)">→</button>
   </div>
-  <div class="sh">← 前 / 次 →　タップでめくる</div>
+  <div class="sh">タップ / Space でめくる ・ ←→ で移動 ・ 🔊 or S で発音 ・ 1/2 で判定</div>
 </div>
 
 <!-- WORDS -->
@@ -447,7 +339,6 @@ textarea.fi{{min-height:80px;resize:vertical;line-height:1.5}}
 <div id="vst" class="view">
   <div class="vh">
     <div><div class="vtitle">統計・設定</div></div>
-    <div id="user-badge-wrap"></div>
   </div>
 
   <div class="ssec">
@@ -541,17 +432,17 @@ textarea.fi{{min-height:80px;resize:vertical;line-height:1.5}}
 </div><!-- /content -->
 
 <nav id="nav">
-  <button class="nb active" onclick="sw('va',this)" id="add-nb">
+  <button class="nb active" data-v="va" onclick="sw('va',this)" id="add-nb">
     <div class="badge" id="add-badge">0</div>
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>追加
   </button>
-  <button class="nb" onclick="sw('vr',this)">
+  <button class="nb" data-v="vr" onclick="sw('vr',this)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="18" rx="3"/><path d="M8 10h8M8 14h5"/></svg>復習
   </button>
-  <button class="nb" onclick="sw('vw',this)">
+  <button class="nb" data-v="vw" onclick="sw('vw',this)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>単語帳
   </button>
-  <button class="nb" onclick="sw('vst',this)">
+  <button class="nb" data-v="vst" onclick="sw('vst',this)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>統計
   </button>
 </nav>
@@ -589,70 +480,47 @@ textarea.fi{{min-height:80px;resize:vertical;line-height:1.5}}
 
 <script>
 const VOCAB = {vj};
-const GCID  = '{gcid}';
-const AUTH_EMAIL = '{gemail}';
 const ALL_YEARS  = {yrs_js};
 const GH_REPO    = '{gh_repo}';
 const POS_L = {{noun:'名詞',verb:'動詞',phrasal_verb:'句動詞',adjective:'形容詞',adverb:'副詞',expression:'表現',abbreviation:'略語'}};
 
-// ── AUTH (Google SSO only) ─────────────────────
-function checkAuth() {{
-  if (sessionStorage.getItem('va') === '1') {{ unlock(); return; }}
-  const s = document.createElement('script');
-  s.src = 'https://accounts.google.com/gsi/client';
-  s.async = true; s.defer = true;
-  s.onload = initGSI;
-  document.head.appendChild(s);
+// ── PRONUNCIATION (Web Speech API) ─────────────
+let enVoice = null;
+function pickVoice() {{
+  if (!('speechSynthesis' in window)) return;
+  const vs = speechSynthesis.getVoices();
+  enVoice = vs.find(v => /en[-_]US/i.test(v.lang) && /Samantha|Google US|Natural/i.test(v.name))
+        || vs.find(v => /en[-_]US/i.test(v.lang))
+        || vs.find(v => /^en/i.test(v.lang)) || null;
 }}
-
-function initGSI() {{
-  if (!window.google) return;
-  google.accounts.id.initialize({{
-    client_id: GCID,
-    callback: onGoogleCB,
-    auto_select: true,
-    cancel_on_tap_outside: false,
-  }});
-  google.accounts.id.prompt();
+if ('speechSynthesis' in window) {{
+  pickVoice();
+  speechSynthesis.onvoiceschanged = pickVoice;
 }}
-
-function startGoogleSignIn() {{
-  if (window.google) google.accounts.id.prompt();
-}}
-
-function onGoogleCB(resp) {{
+function speak(text, btn) {{
+  if (!text || !('speechSynthesis' in window)) return;
   try {{
-    const pl = JSON.parse(atob(resp.credential.split('.')[1]));
-    if (AUTH_EMAIL && pl.email !== AUTH_EMAIL) {{
-      document.getElementById('lock-err').textContent = 'このアカウントはアクセスできません';
-      return;
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'en-US'; u.rate = 0.92;
+    if (enVoice) u.voice = enVoice;
+    if (btn) {{
+      btn.classList.add('speaking');
+      u.onend = u.onerror = () => btn.classList.remove('speaking');
     }}
-    sessionStorage.setItem('va', '1');
-    sessionStorage.setItem('vu', pl.name || pl.email);
-    sessionStorage.setItem('vav', (pl.name || '?')[0].toUpperCase());
-    unlock();
-  }} catch(e) {{
-    document.getElementById('lock-err').textContent = '認証エラー: ' + e.message;
-  }}
+    speechSynthesis.speak(u);
+  }} catch(e) {{}}
 }}
-
-function unlock() {{
-  document.getElementById('lock').style.display = 'none';
-  document.getElementById('app').style.display = '';
-  const name = sessionStorage.getItem('vu');
-  if (name) {{
-    const av = sessionStorage.getItem('vav') || name[0].toUpperCase();
-    document.getElementById('user-badge-wrap').innerHTML =
-      `<div class="user-badge"><div class="user-av">${{av}}</div>${{esc(name)}}</div>`;
-  }}
-  initApp();
-}}
+function speakCurrent() {{ if (deck.length) speak(deck[idx].word, document.getElementById('spk-btn')); }}
+function speakId(id) {{ const c = VOCAB.find(v => v.id === id); if (c) speak(c.word); }}
 
 // ── STATE ──────────────────────────────────────
 let prog = {{}}, st = {{revFilter: 'all'}};
 let deck = [], idx = 0, flipped = false;
 let wf = {{year: 'all', pos: 'all', mastery: 'all', search: '', sortNew: true}};
 let pq = [];
+let sess = {{good: 0, again: 0}};
+const MASTERY_RANK = {{new: 0, learning: 1, mastered: 2}};
 
 function loadSt() {{
   try {{ prog = JSON.parse(localStorage.getItem('vp') || '{{}}'); }} catch(e) {{}}
@@ -671,10 +539,19 @@ function gm(c) {{ return prog[c.id] || c.mastery || 'new'; }}
 function buildDeck() {{
   const rf = st.revFilter || 'all';
   deck = rf === 'all' ? [...VOCAB] : VOCAB.filter(c => gm(c) === rf);
+  // Smart order: study unmastered words first (stable within each tier)
+  deck = deck
+    .map((c, i) => [c, i])
+    .sort((a, b) => (MASTERY_RANK[gm(a[0])] - MASTERY_RANK[gm(b[0])]) || (a[1] - b[1]))
+    .map(p => p[0]);
   idx = 0;
   document.getElementById('pfl').textContent =
     {{all:'全て', new:'未学習', learning:'学習中', mastered:'習得済み'}}[rf] || '全て';
   showC();
+}}
+function updSess() {{
+  const el = document.getElementById('sess');
+  if (el) el.textContent = `✓${{sess.good}} ↺${{sess.again}}`;
 }}
 function showC() {{
   if (flipped) {{ flipped = false; document.getElementById('card').classList.remove('flip'); }}
@@ -712,7 +589,11 @@ function mark(good) {{
   prog[c.id] = good
     ? (cur === 'new' ? 'learning' : 'mastered')
     : (cur === 'mastered' ? 'learning' : 'new');
-  savP(); nav(1);
+  savP();
+  if (good) sess.good++; else sess.again++;
+  updSess();
+  if (navigator.vibrate) navigator.vibrate(good ? 14 : [8, 40, 8]);
+  nav(1);
 }}
 function shuf() {{
   for (let i = deck.length - 1; i > 0; i--) {{
@@ -736,6 +617,21 @@ document.getElementById('cw').addEventListener('touchend', e => {{
 }}, {{passive: true}});
 document.getElementById('card').addEventListener('click', flipC);
 
+// Keyboard shortcuts (desktop) — active only in the Review view
+document.addEventListener('keydown', e => {{
+  if (!document.getElementById('vr').classList.contains('active')) return;
+  const t = e.target.tagName;
+  if (t === 'INPUT' || t === 'TEXTAREA' || e.metaKey || e.ctrlKey || e.altKey) return;
+  const k = e.key;
+  if (k === 'ArrowLeft') {{ nav(-1); }}
+  else if (k === 'ArrowRight') {{ nav(1); }}
+  else if (k === ' ' || k === 'Enter' || k === 'ArrowUp' || k === 'ArrowDown') {{ e.preventDefault(); flipC(); }}
+  else if (k === '1') {{ if (flipped) mark(false); }}
+  else if (k === '2') {{ if (flipped) mark(true); }}
+  else if (k === 's' || k === 'S') {{ speakCurrent(); }}
+  else return;
+}});
+
 // ── WORDS ──────────────────────────────────────
 function filt() {{
   let l = VOCAB;
@@ -757,7 +653,9 @@ function renW() {{
   document.getElementById('wcount').textContent = `${{l.length}}件`;
   const el = document.getElementById('wl');
   if (!l.length) {{ el.innerHTML = '<div class="empty">該当する単語がありません</div>'; return; }}
-  el.innerHTML = l.slice(0, 300).map(c => {{
+  const LIMIT = 300;
+  const trunc = l.length > LIMIT;
+  el.innerHTML = l.slice(0, LIMIT).map(c => {{
     const m = gm(c);
     const ml = {{new:'未学習', learning:'学習中', mastered:'習得済み'}}[m];
     const mo = parseInt((c.date_added || '').split('/')[0]) || '';
@@ -765,7 +663,7 @@ function renW() {{
     const pl = POS_L[c.pos] || c.pos || '';
     return `<div class="wi">
       <div class="wit">
-        <div class="wiw">${{esc(c.word)}}</div>
+        <div class="wiw">${{esc(c.word)}} <button class="wspk" onclick="speakId(${{c.id}})" title="発音を聞く">🔊</button></div>
         <div class="wib">
           <span class="mb m${{m[0]}}">${{ml}}</span>
           ${{dl ? `<span class="db">${{dl}}</span>` : ''}}
@@ -779,7 +677,7 @@ function renW() {{
         <button class="wedit" onclick="openEdit(${{c.id}})">✎ 編集</button>
       </div>
     </div>`;
-  }}).join('');
+  }}).join('') + (trunc ? `<div class="trunc-note">上位 ${{LIMIT}} 件を表示中（全 ${{l.length}} 件）。検索やフィルターで絞り込めます。</div>` : '');
 }}
 function setSrch(v) {{ wf.search = v; renW(); }}
 function setY(v, b) {{ wf.year = v;    chp('ybar', b); renW(); }}
@@ -1125,13 +1023,19 @@ function sw(id, btn) {{
   document.getElementById(id).classList.add('active');
   document.querySelectorAll('.nb').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
+  try {{ localStorage.setItem('lastView', id); }} catch(e) {{}}
   if (id === 'vw')  renW();
+  if (id === 'vr')  updSess();
   if (id === 'va')  {{ updQUI(); updAddUI(); }}
   if (id === 'vst') {{
     renderTrend(); renderDonut(); renderYearTable(); updTokenUI();
     ['all','new','learning','mastered'].forEach(k =>
       document.getElementById('rf-' + k).textContent = (st.revFilter === k) ? '✓' : '');
   }}
+}}
+function goView(id) {{
+  const btn = document.querySelector(`#nav .nb[data-v="${{id}}"]`);
+  if (btn) sw(id, btn);
 }}
 
 // ── UTILS ──────────────────────────────────────
@@ -1140,13 +1044,16 @@ function esc(s) {{ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').rep
 // ── INIT ───────────────────────────────────────
 function initApp() {{
   loadSt();
-  buildDeck(); renW(); updQUI(); updAddUI(); updTokenUI();
+  buildDeck(); renW(); updQUI(); updAddUI(); updTokenUI(); updSess();
   setRF(st.revFilter || 'all');
+  // Restore the last tab the user was on (defaults to Add)
+  let last = 'va';
+  try {{ last = localStorage.getItem('lastView') || 'va'; }} catch(e) {{}}
+  if (last !== 'va') goView(last);
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {{}});
 }}
 
-checkAuth();
-if (sessionStorage.getItem('va') === '1') unlock();
+initApp();
 </script>
 </body>
 </html>"""
