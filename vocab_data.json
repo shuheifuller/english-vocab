@@ -5050,5 +5050,17 @@
     "year": 2026,
     "pos": "noun",
     "mastery": "new"
+  },
+  {
+    "id": 422,
+    "word": "Ying and yang",
+    "meaning_ja": "陰陽または陰陽は、古代中国の哲学に由来する概念であり、反対ではあるが相補的であり、相互に相互作用し、相互接続し、相互に支持し、相互に永続する宇宙の原理または力が存在するという概念である。",
+    "english_def": "Originating in ancient Chinese philosophy, yin and yang or yin-yang is the concept that there exist cosmic principles or forces that are opposite but complementary, which interact, interconnect, support and perpetuate each other.",
+    "example": "",
+    "notes": "Each Leadership Principle has Ying and yang",
+    "date_added": "7/17",
+    "year": 2026,
+    "pos": "expression",
+    "mastery": "new"
   }
 ]
