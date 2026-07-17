@@ -1,5 +1,5 @@
 // Cache version — bump this to force cache invalidation on deploy
-const CACHE = 'vocab-v1784267376';
+const CACHE = 'vocab-v1784267386';
 const FILES = ['vocab.html', 'manifest.json', 'apple-touch-icon.png', 'icon-192.png', 'icon-512.png'];
 
 self.addEventListener('install', e => {

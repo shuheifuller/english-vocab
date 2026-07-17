@@ -5062,5 +5062,17 @@
     "year": 2026,
     "pos": "expression",
     "mastery": "new"
+  },
+  {
+    "id": 423,
+    "word": "Hear on the grapevine that",
+    "meaning_ja": "（静的）耳を通して音を知覚する。",
+    "english_def": "(stative) To perceive sounds through the ear.",
+    "example": "I was deaf, and now I can hear.",
+    "notes": "I heard on the grapevine that you’re moving to Japan at the end of this month.",
+    "date_added": "7/17",
+    "year": 2026,
+    "pos": "phrasal_verb",
+    "mastery": "new"
   }
 ]
