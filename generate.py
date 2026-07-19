@@ -129,6 +129,8 @@ textarea.fi{{min-height:80px;resize:vertical;line-height:1.5}}
 .arb.spk{{font-size:20px}}
 .arb.spk.speaking{{background:var(--ac);border-color:var(--ac);color:#fff}}
 .sh{{font-size:10px;color:var(--tx2);text-align:center;margin-top:4px;flex-shrink:0}}
+.sh-key{{display:none}}
+@media(hover:hover) and (pointer:fine){{.sh-touch{{display:none}}.sh-key{{display:block}}}}
 
 /* ── WORDS ────────────────────────────────────── */
 #vw .vh{{flex-direction:column;align-items:stretch;gap:8px}}
@@ -224,11 +226,7 @@ textarea.fi{{min-height:80px;resize:vertical;line-height:1.5}}
 
 <!-- ADD (first / default view) -->
 <div id="va" class="view active">
-  <div class="vh"><div><div class="vtitle">単語を追加</div><div class="vsub">意味・発音・品詞は自動で調べます</div></div></div>
-
-  <div style="margin:0 16px 12px;background:rgba(167,139,250,.1);border:1px solid var(--pu);border-radius:10px;padding:10px 14px;font-size:12px;color:var(--pu);line-height:1.6">
-    💡 「追加」を押すと確認ページが開きます。<b>緑の保存ボタン</b>を押すだけで、数分後に単語が登録されます。
-  </div>
+  <div class="vh"><div><div class="vtitle">単語を追加</div><div class="vsub">意味や訳は自動で入ります</div></div></div>
 
   <div class="fsec">
     <label class="flbl">単語 / 表現 *</label>
@@ -245,18 +243,18 @@ textarea.fi{{min-height:80px;resize:vertical;line-height:1.5}}
   <!-- Add status -->
   <div id="dispatch-status" style="display:none;margin:0 16px 14px;text-align:center">
     <div id="dispatch-msg" style="font-size:13px;color:var(--tx2)"></div>
-    <div style="font-size:11px;color:var(--tx2);margin-top:6px">数分後に自動で反映されます</div>
+    <div style="font-size:11px;color:var(--tx2);margin-top:6px">反映まで数分かかります</div>
   </div>
 
-  <div class="divider"></div>
-
-  <!-- Pending (saved while offline) -->
-  <div class="fsec" id="local-queue-section">
-    <div class="stitle">追加待ち（<span id="qcnt">0</span>件）</div>
-    <div id="qempty" class="empty">追加待ちの単語はありません</div>
-    <div class="psec" id="plist" style="display:none"></div>
-    <div id="pending-hint" class="empty" style="display:none;font-size:12px;padding:12px 4px 0;text-align:left;line-height:1.6">
-      オフライン中に保存した単語です。オンラインに戻ったら各単語の<b>「追加」</b>を押すと登録されます。
+  <!-- Saved while offline (hidden when empty) -->
+  <div id="pending-wrap" style="display:none">
+    <div class="divider"></div>
+    <div class="fsec">
+      <div class="stitle">あとで登録する単語（<span id="qcnt">0</span>件）</div>
+      <div class="psec" id="plist"></div>
+      <div class="empty" style="font-size:12px;padding:12px 4px 0;text-align:left;line-height:1.6">
+        電波のないときに保存した単語です。<b>「登録」</b>を押すと追加できます。
+      </div>
     </div>
   </div>
 </div>
@@ -296,7 +294,8 @@ textarea.fi{{min-height:80px;resize:vertical;line-height:1.5}}
     <button class="arb spk" id="spk-btn" onclick="speakCurrent()" title="発音を聞く">🔊</button>
     <button class="arb" onclick="nav(1)">→</button>
   </div>
-  <div class="sh">タップ / Space でめくる ・ ←→ で移動 ・ 🔊 or S で発音 ・ 1/2 で判定</div>
+  <div class="sh sh-touch">タップでめくる ・ スワイプで次へ</div>
+  <div class="sh sh-key">Space でめくる ・ ←→ で移動 ・ S で発音 ・ 1/2 で判定</div>
 </div>
 
 <!-- WORDS -->
@@ -343,27 +342,27 @@ textarea.fi{{min-height:80px;resize:vertical;line-height:1.5}}
       <div class="guide-item">
         <div class="guide-icon">➕</div>
         <div>
-          <div class="guide-title">「追加」タブから登録</div>
-          <div class="guide-body">単語を入力して「追加」を押し、開いた確認ページで<b>緑の保存ボタン</b>を押すだけ。意味・発音・品詞・日本語訳は自動で調べます。</div>
+          <div class="guide-title">単語の追加はかんたん</div>
+          <div class="guide-body">単語を入れて「追加する」→ 開いたページで<b>緑のボタン</b>を押すだけ。意味や訳は自動で入ります。</div>
         </div>
       </div>
       <div class="guide-item">
         <div class="guide-icon">🃏</div>
         <div>
-          <div class="guide-title">フラッシュカードで復習</div>
-          <div class="guide-body">タップでめくる / スワイプで次へ / 「わかった！」で習熟度が上がります。</div>
+          <div class="guide-title">カードで覚える</div>
+          <div class="guide-body">タップでめくる、スワイプで次へ。「わかった！」を重ねると習得済みになります。</div>
         </div>
       </div>
     </div>
   </div>
 
   <div class="ssec">
-    <div class="stitle">📈 単語追加トレンド（年別）</div>
+    <div class="stitle">📈 年ごとの単語数</div>
     <div class="chart-scroll"><svg id="trend-svg" height="180"></svg></div>
   </div>
 
   <div class="ssec">
-    <div class="stitle">📊 現在の習熟度</div>
+    <div class="stitle">📊 いまの習熟度</div>
     <div class="donut-wrap">
       <svg id="donut-svg" width="110" height="110" viewBox="-1 -1 2 2" style="flex-shrink:0"></svg>
       <div class="donut-legend" id="donut-legend"></div>
@@ -371,12 +370,12 @@ textarea.fi{{min-height:80px;resize:vertical;line-height:1.5}}
   </div>
 
   <div class="ssec">
-    <div class="stitle">📅 年別習熟度</div>
+    <div class="stitle">📅 年ごとの進み具合</div>
     <table class="yt" id="yt"></table>
   </div>
 
   <div class="ssec">
-    <div class="stitle">⚙️ 復習フィルター</div>
+    <div class="stitle">🎯 復習する範囲</div>
     <div class="sc">
       <div class="sr" onclick="setRF('all')"><div class="srt"><div class="srl">すべての単語</div></div><div class="srv" id="rf-all">✓</div></div>
       <div class="sr" onclick="setRF('new')"><div class="srt"><div class="srl">未学習のみ</div></div><div class="srv" id="rf-new"></div></div>
@@ -386,7 +385,7 @@ textarea.fi{{min-height:80px;resize:vertical;line-height:1.5}}
   </div>
 
   <div class="ssec">
-    <div class="stitle">⚙️ 操作</div>
+    <div class="stitle">🔧 その他</div>
     <div class="sc">
       <div class="sr"><div class="srt"><div class="srl">カードをシャッフル</div></div><button class="sbtn2" onclick="shuf()">シャッフル</button></div>
       <div class="sr"><div class="srt"><div class="srl">進捗をリセット</div><div class="srs">全単語を未学習に戻す</div></div><button class="sbtn2" style="background:var(--tx2)" onclick="resetP()">リセット</button></div>
@@ -522,7 +521,7 @@ function showC() {{
   if (flipped) {{ flipped = false; document.getElementById('card').classList.remove('flip'); }}
   document.getElementById('ca').style.display = 'none';
   const t = deck.length;
-  if (!t) {{ document.getElementById('cword').textContent = '該当なし'; document.getElementById('pt').textContent = '0件'; return; }}
+  if (!t) {{ document.getElementById('cword').textContent = 'ここに出す単語がありません'; document.getElementById('pt').textContent = '0件'; return; }}
   const c = deck[idx];
   document.getElementById('cword').textContent = c.word;
   document.getElementById('cmja').textContent = c.meaning_ja || '（意味未登録）';
@@ -642,7 +641,7 @@ function renW() {{
         <button class="wedit" onclick="openEdit(${{c.id}})">✎ 編集</button>
       </div>
     </div>`;
-  }}).join('') + (trunc ? `<div class="trunc-note">上位 ${{LIMIT}} 件を表示中（全 ${{l.length}} 件）。検索やフィルターで絞り込めます。</div>` : '');
+  }}).join('') + (trunc ? `<div class="trunc-note">${{LIMIT}}件まで表示しています（全${{l.length}}件）。検索で絞り込めます</div>` : '');
 }}
 function setSrch(v) {{ wf.search = v; renW(); }}
 function setY(v, b) {{ wf.year = v;    chp('ybar', b); renW(); }}
@@ -696,7 +695,7 @@ async function saveEdit() {{
   renW();
   if (deck.length && deck[idx] && deck[idx].id === editingId) showC();
   const msg = document.getElementById('ed-msg');
-  msg.innerHTML = '✅ 確認ページが開きました。<b>緑の保存ボタン</b>を押すと保存されます。<br>数分後に自動で反映されます。';
+  msg.innerHTML = 'あとは開いたページで<b>緑のボタン</b>を押すだけ！<br>反映まで数分かかります。';
   msg.style.color = 'var(--gn)';
   msg.style.display = '';
   setTimeout(() => closeEdit(), 2400);
@@ -716,7 +715,7 @@ async function addW() {{
     savQ();
     document.getElementById('aw').value = '';
     document.getElementById('an').value = '';
-    alert(`✓ オフラインのため "${{w}}" を追加待ちに保存しました`);
+    alert(`"${{w}}" を保存しました。電波が戻ったら「登録」を押してください`);
   }} else {{
     openAddIssue(w, notes);
   }}
@@ -731,7 +730,7 @@ function openAddIssue(word, notes) {{
   document.getElementById('an').value = '';
   const statusEl = document.getElementById('dispatch-status');
   const msgEl = document.getElementById('dispatch-msg');
-  msgEl.innerHTML = `✅ 確認ページが開きました。<b>緑の保存ボタン</b>を押すと<br><b>${{esc(word)}}</b> が登録されます（数分後に反映）`;
+  msgEl.innerHTML = `<b>${{esc(word)}}</b> を登録します 🐈‍⬛<br>あとは開いたページで<b>緑のボタン</b>を押すだけ！`;
   msgEl.style.color = 'var(--gn)';
   statusEl.style.display = '';
   setTimeout(() => {{ msgEl.textContent = '最新の状態を確認中…'; location.reload(); }}, 150000);
@@ -749,19 +748,16 @@ function updQUI() {{
   document.getElementById('qcnt').textContent = n;
   const b = document.getElementById('add-badge');
   b.textContent = n; b.style.display = n ? '' : 'none';
-  document.getElementById('qempty').style.display = n ? 'none' : '';
-  const pl = document.getElementById('plist');
-  pl.style.display = n ? '' : 'none';
-  const hint = document.getElementById('pending-hint');
-  if (hint) hint.style.display = n ? '' : 'none';
-  pl.innerHTML = pq.map((q, i) => `
+  // The whole section only exists when something is waiting
+  document.getElementById('pending-wrap').style.display = n ? '' : 'none';
+  document.getElementById('plist').innerHTML = pq.map((q, i) => `
     <div class="pi">
       <div>
         <div class="piw">${{esc(q.word)}}</div>
         ${{q.notes ? `<div style="font-size:12px;color:var(--tx2)">${{esc(q.notes)}}</div>` : ''}}
       </div>
       <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
-        <button class="sbtn2" style="padding:6px 13px;font-size:12px" onclick="submitPending(${{i}})">追加</button>
+        <button class="sbtn2" style="padding:6px 13px;font-size:12px" onclick="submitPending(${{i}})">登録</button>
         <button class="pdel" onclick="remQ(${{i}})">✕</button>
       </div>
     </div>`).join('');

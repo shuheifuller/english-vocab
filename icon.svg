@@ -1,17 +1,19 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024" fill="none">
-  <!-- White background -->
-  <rect width="1024" height="1024" fill="#ffffff"/>
+  <!-- Warm cream background -->
+  <rect width="1024" height="1024" fill="#f6f1e8"/>
 
-  <!-- Solid black sitting-cat silhouette (no eyes, no nose) -->
-  <g fill="#141414" transform="translate(512 488) scale(1.2) translate(-512 -488)">
-    <!-- Tail (soft curl, lower right) -->
-    <path d="M648 716 C744 710 776 598 708 556 C687 543 666 560 679 589 C691 616 672 662 634 690 Z"/>
-    <!-- Body (sitting) -->
-    <path d="M512 470 C600 478 656 612 656 744 C656 778 614 794 512 794 C410 794 368 778 368 744 C368 612 424 478 512 470 Z"/>
-    <!-- Ears -->
-    <path d="M430 312 L452 182 L548 300 Z"/>
-    <path d="M594 312 L572 182 L476 300 Z"/>
-    <!-- Head -->
-    <circle cx="512" cy="378" r="108"/>
+  <!-- Minimal black cat peeking from the bottom -->
+  <g fill="#16161e">
+    <!-- Ears (sleek triangles) -->
+    <path d="M 302 580 L 272 306 L 480 452 Z"/>
+    <path d="M 722 580 L 752 306 L 544 452 Z"/>
+    <!-- Head (dome bleeding off the bottom edge) -->
+    <circle cx="512" cy="792" r="352"/>
+  </g>
+
+  <!-- Amber almond eyes -->
+  <g fill="#f2a63c">
+    <path d="M -62 0 Q 0 -46 62 0 Q 0 46 -62 0 Z" transform="translate(392 700) rotate(-6)"/>
+    <path d="M -62 0 Q 0 -46 62 0 Q 0 46 -62 0 Z" transform="translate(632 700) rotate(6)"/>
   </g>
 </svg>
