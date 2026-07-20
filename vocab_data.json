@@ -5074,5 +5074,17 @@
     "year": 2026,
     "pos": "phrasal_verb",
     "mastery": "new"
+  },
+  {
+    "id": 424,
+    "word": "Household altar",
+    "meaning_ja": "集合的に、特定の家に住んでいるすべての人、付添人、使用人などを含む家族、家庭または家族施設。",
+    "english_def": "Collectively, all the persons who live in a given house; a family including attendants, servants etc.; a domestic or family establishment.",
+    "example": "",
+    "notes": "",
+    "date_added": "7/20",
+    "year": 2026,
+    "pos": "noun",
+    "mastery": "new"
   }
 ]
