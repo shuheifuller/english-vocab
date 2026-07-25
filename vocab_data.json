@@ -5086,5 +5086,17 @@
     "year": 2026,
     "pos": "noun",
     "mastery": "new"
+  },
+  {
+    "id": 425,
+    "word": "Hold ST against SO",
+    "meaning_ja": "把持またはグリップ。",
+    "english_def": "A grasp or grip.",
+    "example": "Keep a firm hold on the handlebars.",
+    "notes": "Will hold that against you! By Co Tran",
+    "date_added": "7/25",
+    "year": 2026,
+    "pos": "noun",
+    "mastery": "new"
   }
 ]
