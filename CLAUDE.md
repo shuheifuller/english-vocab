@@ -67,12 +67,29 @@ When Shuhei asks questions about his vocabulary:
 3. Synthesize answers with citations to specific entries
 4. **File valuable answers back** — if the answer is a useful comparison or insight, add it to the appropriate theme page or create a new `wiki/themes/` page
 
-### 3. Sync Queue (Process Pending Words)
+### 3. Sync Words Added on the Phone
 
-When Shuhei adds words to `raw/queue.json` while offline:
-- Run: `python3 sync.py`
-- This calls Free Dictionary API + MyMemory translation API, updates `vocab_data.json`, and regenerates `vocab.html`
-- After sync, manually update `wiki/index.md` and relevant theme pages
+The PWA saves new words **on the device** (browser localStorage) and looks up the
+meaning itself, so adding is instant with no GitHub step. Those words are not yet
+in `vocab_data.json`.
+
+When Shuhei pastes a block like this (from the app's 「コピー」 button):
+
+```
+追加: serendipity — ラジオで聞いた
+追加: hear on the grapevine
+編集: reconcile → 意味: … / 例文: … / メモ: …
+```
+
+- Treat each `追加:` line as a normal ingest (workflow 1) — the text after `—` is his note
+- Treat each `編集:` line as an update to that word's `meaning_ja` / `example` / `notes`
+  (never touch `mastery`, `word`, `date_added`, `year`, `pos`)
+- Regenerate with `python3 generate.py`, then commit and push
+
+Once a word lands in `vocab_data.json` and he reloads the app, the app **auto-removes
+its local copy** (matched case-insensitively by word), so nothing duplicates.
+
+`python3 sync.py` still works for `raw/queue.json` if a queue file is ever used.
 
 ### 4. Lint (Health Check)
 

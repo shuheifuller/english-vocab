@@ -18,7 +18,6 @@ def generate(vocab, cfg):
     total   = len(vocab)
     years   = sorted({v.get("year", 2020) for v in vocab}, reverse=True)
     yrs_js  = json.dumps(years)
-    gh_repo = cfg.get("github_repo", "shuheifuller/english-vocab")
 
     return f"""<!DOCTYPE html>
 <html lang="ja">
@@ -116,7 +115,10 @@ textarea.fi{{min-height:80px;resize:vertical;line-height:1.5}}
 .cex{{background:var(--sf2);border-radius:10px;padding:10px 12px;margin-bottom:auto}}
 .cexl{{font-size:9px;color:var(--ac);text-transform:uppercase;letter-spacing:1px;margin-bottom:5px;font-weight:800}}
 .cext{{font-size:12px;line-height:1.6}}
-.cnote{{font-size:11px;color:var(--tx2);margin-top:6px;line-height:1.5;font-style:italic}}
+.cnote{{font-size:11px;color:var(--tx2);line-height:1.5;font-style:italic}}
+.cexl.nt{{color:var(--pu)}}
+#cex-nt{{margin-top:10px}}
+#cex-ex:empty,#cex-nt:empty{{display:none}}
 .ca{{display:flex;gap:8px;width:100%;max-width:400px;flex-shrink:0;margin-top:10px}}
 .ab{{flex:1;padding:12px 8px;border-radius:12px;border:none;font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;font-family:inherit}}
 .again{{background:rgba(233,69,96,.15);color:var(--ac)}}
@@ -214,6 +216,9 @@ textarea.fi{{min-height:80px;resize:vertical;line-height:1.5}}
 .srv{{font-size:13px;color:var(--ac);font-weight:700;flex-shrink:0}}
 .sbtn2{{background:var(--ac);color:#fff;border:none;border-radius:8px;padding:7px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit}}
 .ssel{{background:var(--sf2);color:var(--tx);border:1px solid var(--bd);border-radius:8px;padding:7px 10px;font-size:13px;font-family:inherit;outline:none}}
+.toast{{position:fixed;left:50%;bottom:calc(76px + var(--sb));transform:translateX(-50%) translateY(14px);background:var(--sf);color:var(--tx);border:1px solid var(--bd);border-radius:12px;padding:12px 18px;font-size:13px;font-weight:600;box-shadow:0 8px 28px rgba(0,0,0,.35);opacity:0;pointer-events:none;transition:opacity .22s,transform .22s;z-index:300;max-width:calc(100% - 32px);text-align:center}}
+.toast.show{{opacity:1;transform:translateX(-50%) translateY(0)}}
+.toast.warn{{border-color:var(--yw);color:var(--yw)}}
 .user-badge{{background:var(--sf);border:1px solid var(--bd);border-radius:24px;padding:6px 14px 6px 8px;display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600}}
 .user-av{{width:28px;height:28px;border-radius:50%;background:var(--ac);display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;font-weight:800;flex-shrink:0}}
 </style>
@@ -240,21 +245,16 @@ textarea.fi{{min-height:80px;resize:vertical;line-height:1.5}}
     <button class="subbtn" id="add-submit-btn" onclick="addW()">追加する →</button>
   </div>
 
-  <!-- Add status -->
-  <div id="dispatch-status" style="display:none;margin:0 16px 14px;text-align:center">
-    <div id="dispatch-msg" style="font-size:13px;color:var(--tx2)"></div>
-    <div style="font-size:11px;color:var(--tx2);margin-top:6px">反映まで数分かかります</div>
-  </div>
-
-  <!-- Saved while offline (hidden when empty) -->
+  <!-- Added on this device (hidden when empty) -->
   <div id="pending-wrap" style="display:none">
     <div class="divider"></div>
     <div class="fsec">
-      <div class="stitle">あとで登録する単語（<span id="qcnt">0</span>件）</div>
+      <div class="stitle">この端末で追加（<span id="qcnt">0</span>件）</div>
       <div class="psec" id="plist"></div>
-      <div class="empty" style="font-size:12px;padding:12px 4px 0;text-align:left;line-height:1.6">
-        電波のないときに保存した単語です。<b>「登録」</b>を押すと追加できます。
+      <div class="empty" style="font-size:12px;padding:12px 4px 12px;text-align:left;line-height:1.6">
+        すぐ使えます。Macでまとめて本登録するときは「コピー」を押してClaudeに貼り付けてください。
       </div>
+      <button class="expbtn" onclick="copyMine()">📋 コピー</button>
     </div>
   </div>
 </div>
@@ -278,9 +278,14 @@ textarea.fi{{min-height:80px;resize:vertical;line-height:1.5}}
         <div class="cmja" id="cmja"></div>
         <div class="cmen" id="cmen"></div>
         <div class="cex" id="cex">
-          <div class="cexl">例文</div>
-          <div class="cext" id="cext"></div>
-          <div class="cnote" id="cnote"></div>
+          <div id="cex-ex">
+            <div class="cexl">例文</div>
+            <div class="cext" id="cext"></div>
+          </div>
+          <div id="cex-nt">
+            <div class="cexl nt">メモ</div>
+            <div class="cnote" id="cnote"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -440,12 +445,12 @@ textarea.fi{{min-height:80px;resize:vertical;line-height:1.5}}
     <div class="emsg" id="ed-msg" style="display:none"></div>
   </div>
 </div>
+<div class="toast" id="toast"></div>
 </div><!-- /app -->
 
 <script>
 const VOCAB = {vj};
 const ALL_YEARS  = {yrs_js};
-const GH_REPO    = '{gh_repo}';
 const POS_L = {{noun:'名詞',verb:'動詞',phrasal_verb:'句動詞',adjective:'形容詞',adverb:'副詞',expression:'表現',abbreviation:'略語'}};
 
 // ── PRONUNCIATION (Web Speech API) ─────────────
@@ -476,15 +481,49 @@ function speak(text, btn) {{
   }} catch(e) {{}}
 }}
 function speakCurrent() {{ if (deck.length) speak(deck[idx].word, document.getElementById('spk-btn')); }}
-function speakId(id) {{ const c = VOCAB.find(v => v.id === id); if (c) speak(c.word); }}
+function speakId(id) {{ const c = ALL.find(v => String(v.id) === String(id)); if (c) speak(c.word); }}
 
 // ── STATE ──────────────────────────────────────
 let prog = {{}}, st = {{revFilter: 'all'}};
 let deck = [], idx = 0, flipped = false;
 let wf = {{year: 'all', pos: 'all', mastery: 'all', search: '', sortNew: true}};
-let pq = [];
 let sess = {{good: 0, again: 0}};
 const MASTERY_RANK = {{new: 0, learning: 1, mastered: 2}};
+
+// Words added on this device + edits to existing ones, until they're
+// folded into the main list. ALL = the main list with both applied.
+let mine = [], edits = {{}}, ALL = VOCAB;
+
+function nrm(w) {{ return (w || '').trim().toLowerCase(); }}
+
+function rebuild() {{
+  ALL = VOCAB.map(v => edits[v.id] ? {{...v, ...edits[v.id]}} : v).concat(mine);
+}}
+
+function loadMine() {{
+  try {{ mine = JSON.parse(localStorage.getItem('vmine') || '[]'); }} catch(e) {{ mine = []; }}
+  try {{ edits = JSON.parse(localStorage.getItem('vedits') || '{{}}'); }} catch(e) {{ edits = {{}}; }}
+  // Drop anything that has since landed in the main list
+  const known = new Set(VOCAB.map(v => nrm(v.word)));
+  const n0 = mine.length, e0 = Object.keys(edits).length;
+  mine = mine.filter(v => !known.has(nrm(v.word)));
+  for (const k of Object.keys(edits)) {{
+    const c = VOCAB.find(v => String(v.id) === String(k)), e = edits[k];
+    if (c && (c.meaning_ja || '') === e.meaning_ja
+          && (c.example || '') === e.example
+          && (c.notes || '') === e.notes) delete edits[k];
+  }}
+  if (mine.length !== n0 || Object.keys(edits).length !== e0) savMine();
+  else rebuild();
+}}
+function savMine() {{
+  localStorage.setItem('vmine', JSON.stringify(mine));
+  localStorage.setItem('vedits', JSON.stringify(edits));
+  rebuild();
+}}
+function savP() {{ localStorage.setItem('vp', JSON.stringify(prog)); }}
+function savSt(k, v) {{ st[k] = v; localStorage.setItem('vs', JSON.stringify(st)); }}
+function gm(c) {{ return prog[c.id] || c.mastery || 'new'; }}
 
 function loadSt() {{
   try {{ prog = JSON.parse(localStorage.getItem('vp') || '{{}}'); }} catch(e) {{}}
@@ -492,17 +531,22 @@ function loadSt() {{
     const s = JSON.parse(localStorage.getItem('vs') || '{{}}');
     st = {{...st, ...s}};
   }} catch(e) {{}}
-  try {{ pq = JSON.parse(localStorage.getItem('vq') || '[]'); }} catch(e) {{}}
 }}
-function savP() {{ localStorage.setItem('vp', JSON.stringify(prog)); }}
-function savSt(k, v) {{ st[k] = v; localStorage.setItem('vs', JSON.stringify(st)); }}
-function savQ() {{ localStorage.setItem('vq', JSON.stringify(pq)); updQUI(); }}
-function gm(c) {{ return prog[c.id] || c.mastery || 'new'; }}
+
+// Toast — quiet confirmation instead of a page hop
+let toastT = null;
+function toast(msg, warn) {{
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast show' + (warn ? ' warn' : '');
+  clearTimeout(toastT);
+  toastT = setTimeout(() => {{ el.className = 'toast'; }}, 2600);
+}}
 
 // ── REVIEW ─────────────────────────────────────
 function buildDeck() {{
   const rf = st.revFilter || 'all';
-  deck = rf === 'all' ? [...VOCAB] : VOCAB.filter(c => gm(c) === rf);
+  deck = rf === 'all' ? [...ALL] : ALL.filter(c => gm(c) === rf);
   // Smart order: study unmastered words first (stable within each tier)
   deck = deck
     .map((c, i) => [c, i])
@@ -512,6 +556,15 @@ function buildDeck() {{
   document.getElementById('pfl').textContent =
     {{all:'全て', new:'未学習', learning:'学習中', mastered:'習得済み'}}[rf] || '全て';
   showC();
+}}
+// Rebuild the deck but stay on the card you were looking at
+function refreshDeck() {{
+  const cur = deck.length && deck[idx] ? String(deck[idx].id) : null;
+  buildDeck();
+  if (cur) {{
+    const i = deck.findIndex(c => String(c.id) === cur);
+    if (i >= 0) {{ idx = i; showC(); }}
+  }}
 }}
 function updSess() {{
   const el = document.getElementById('sess');
@@ -529,6 +582,8 @@ function showC() {{
   const ex = c.example || '', nt = c.notes || '';
   document.getElementById('cext').textContent = ex;
   document.getElementById('cnote').textContent = nt;
+  document.getElementById('cex-ex').style.display = ex ? '' : 'none';
+  document.getElementById('cex-nt').style.display = nt ? '' : 'none';
   document.getElementById('cex').style.display = (ex || nt) ? '' : 'none';
   const posL = POS_L[c.pos] || c.pos || '';
   document.getElementById('cmeta').innerHTML =
@@ -598,7 +653,7 @@ document.addEventListener('keydown', e => {{
 
 // ── WORDS ──────────────────────────────────────
 function filt() {{
-  let l = VOCAB;
+  let l = ALL;
   if (wf.year !== 'all')    l = l.filter(c => c.year === parseInt(wf.year));
   if (wf.pos !== 'all')     l = l.filter(c => c.pos === wf.pos);
   if (wf.mastery !== 'all') l = l.filter(c => gm(c) === wf.mastery);
@@ -627,7 +682,7 @@ function renW() {{
     const pl = POS_L[c.pos] || c.pos || '';
     return `<div class="wi">
       <div class="wit">
-        <div class="wiw">${{esc(c.word)}} <button class="wspk" onclick="speakId(${{c.id}})" title="発音を聞く">🔊</button></div>
+        <div class="wiw">${{esc(c.word)}} <button class="wspk" onclick="speakId('${{c.id}}')" title="発音を聞く">🔊</button></div>
         <div class="wib">
           <span class="mb m${{m[0]}}">${{ml}}</span>
           ${{dl ? `<span class="db">${{dl}}</span>` : ''}}
@@ -638,7 +693,7 @@ function renW() {{
       ${{c.notes      ? `<div class="win"><span class="winl">Note</span>${{esc(c.notes)}}</div>` : ''}}
       <div class="wirow">
         ${{pl ? `<span class="ptag">${{pl}}</span>` : '<span></span>'}}
-        <button class="wedit" onclick="openEdit(${{c.id}})">✎ 編集</button>
+        <button class="wedit" onclick="openEdit('${{c.id}}')">✎ 編集</button>
       </div>
     </div>`;
   }}).join('') + (trunc ? `<div class="trunc-note">${{LIMIT}}件まで表示しています（全${{l.length}}件）。検索で絞り込めます</div>` : '');
@@ -661,9 +716,9 @@ function chp(p, b) {{
 // ── EDIT WORD ──────────────────────────────────
 let editingId = null;
 function openEdit(id) {{
-  const c = VOCAB.find(v => v.id === id);
+  const c = ALL.find(v => String(v.id) === String(id));
   if (!c) return;
-  editingId = id;
+  editingId = c.id;
   document.getElementById('ed-word').textContent = c.word;
   document.getElementById('ed-meaning').value = c.meaning_ja || '';
   document.getElementById('ed-example').value = c.example || '';
@@ -679,94 +734,134 @@ function closeEdit() {{
 document.getElementById('edit-modal').addEventListener('click', e => {{
   if (e.target.id === 'edit-modal') closeEdit();
 }});
-async function saveEdit() {{
+function saveEdit() {{
   if (editingId == null) return;
   const meaning_ja = document.getElementById('ed-meaning').value.trim();
   const example    = document.getElementById('ed-example').value.trim();
   const notes      = document.getElementById('ed-notes').value.trim();
-  const c = VOCAB.find(v => v.id === editingId);
-  const body = `<!--vocab:meaning_ja-->\n${{meaning_ja}}\n<!--vocab:example-->\n${{example}}\n<!--vocab:notes-->\n${{notes}}`;
-  const url = `https://github.com/${{GH_REPO}}/issues/new` +
-    `?title=${{encodeURIComponent(`[vocab-edit] id=${{editingId}} ${{c ? c.word : ''}}`)}}` +
-    `&body=${{encodeURIComponent(body)}}`;
-  window.open(url, '_blank');
-  // Show the change straight away while it saves in the background
-  if (c) {{ c.meaning_ja = meaning_ja; c.example = example; c.notes = notes; }}
-  renW();
-  if (deck.length && deck[idx] && deck[idx].id === editingId) showC();
-  const msg = document.getElementById('ed-msg');
-  msg.innerHTML = 'あとは開いたページで<b>緑のボタン</b>を押すだけ！<br>反映まで数分かかります。';
-  msg.style.color = 'var(--gn)';
-  msg.style.display = '';
-  setTimeout(() => closeEdit(), 2400);
-  setTimeout(() => location.reload(), 150000);
+  const own = mine.find(v => String(v.id) === String(editingId));
+  if (own) {{ own.meaning_ja = meaning_ja; own.example = example; own.notes = notes; }}
+  else {{ edits[editingId] = {{meaning_ja, example, notes}}; }}
+  savMine();
+  renW(); refreshDeck(); updMineUI();
+  closeEdit();
+  toast('✓ 保存しました');
+}}
+
+// ── DICTIONARY LOOKUP (runs right here in the app) ──
+const POS_MAP = {{noun:'noun', verb:'verb', adjective:'adjective', adverb:'adverb',
+  pronoun:'expression', preposition:'expression', conjunction:'expression',
+  interjection:'expression', exclamation:'expression', determiner:'expression'}};
+
+async function lookup(word) {{
+  const q = word.trim(), multi = /\\s/.test(q);
+  const out = {{english_def: '', example: '', pos: multi ? 'expression' : '', meaning_ja: ''}};
+  // Definition + part of speech (single words only — the API can't do phrases)
+  if (!multi) {{
+    try {{
+      const r = await fetch('https://api.dictionaryapi.dev/api/v2/entries/en/' + encodeURIComponent(q));
+      if (r.ok) {{
+        const j = await r.json();
+        const m0 = j[0] && j[0].meanings && j[0].meanings[0];
+        const d0 = m0 && m0.definitions && m0.definitions[0];
+        if (d0 && d0.definition) out.english_def = d0.definition;
+        if (d0 && d0.example)    out.example     = d0.example;
+        if (m0 && m0.partOfSpeech) out.pos = POS_MAP[m0.partOfSpeech] || '';
+      }}
+    }} catch(e) {{}}
+  }}
+  // Japanese meaning
+  try {{
+    const r = await fetch('https://api.mymemory.translated.net/get?q=' +
+                          encodeURIComponent(q) + '&langpair=en|ja');
+    if (r.ok) {{
+      const j = await r.json();
+      const t = ((j && j.responseData && j.responseData.translatedText) || '').trim();
+      if (t && nrm(t) !== nrm(q)) out.meaning_ja = t;
+    }}
+  }} catch(e) {{}}
+  return out;
 }}
 
 // ── ADD WORD ───────────────────────────────────
 async function addW() {{
-  const w = document.getElementById('aw').value.trim();
-  if (!w) {{ alert('単語を入力してください'); return; }}
-  const notes = document.getElementById('an').value.trim();
+  const inp = document.getElementById('aw'), nEl = document.getElementById('an');
+  const w = inp.value.trim();
+  if (!w) {{ inp.focus(); return; }}
+  const dup = ALL.find(v => nrm(v.word) === nrm(w));
+  if (dup) {{ toast(`「${{dup.word}}」はもう入っています`, true); return; }}
 
-  if (navigator.onLine === false) {{
-    // Offline: keep it safe until you're back online
-    const now = new Date();
-    pq.push({{word: w, notes, date_added: `${{now.getMonth()+1}}/${{now.getDate()}}`}});
-    savQ();
-    document.getElementById('aw').value = '';
-    document.getElementById('an').value = '';
-    alert(`"${{w}}" を保存しました。電波が戻ったら「登録」を押してください`);
-  }} else {{
-    openAddIssue(w, notes);
-  }}
+  const notes = nEl.value.trim();
+  const btn = document.getElementById('add-submit-btn');
+  btn.disabled = true; btn.textContent = '調べています…';
+  const info = await lookup(w);
+  btn.disabled = false; btn.textContent = '追加する →';
+
+  const now = new Date();
+  mine.push({{
+    id: 'M' + Date.now(),
+    word: w,
+    meaning_ja: info.meaning_ja,
+    english_def: info.english_def,
+    example: info.example,
+    notes: notes,
+    pos: info.pos,
+    date_added: `${{now.getMonth() + 1}}/${{now.getDate()}}`,
+    year: now.getFullYear(),
+    mastery: 'new',
+  }});
+  savMine();
+  inp.value = ''; nEl.value = '';
+  renW(); refreshDeck(); updMineUI();
+  toast(`✓ ${{w}} を追加しました`);
 }}
 
-function openAddIssue(word, notes) {{
-  const url = `https://github.com/${{GH_REPO}}/issues/new` +
-    `?title=${{encodeURIComponent('[vocab-add] ' + word)}}` +
-    `&body=${{encodeURIComponent(notes || '')}}`;
-  window.open(url, '_blank');
-  document.getElementById('aw').value = '';
-  document.getElementById('an').value = '';
-  const statusEl = document.getElementById('dispatch-status');
-  const msgEl = document.getElementById('dispatch-msg');
-  msgEl.innerHTML = `<b>${{esc(word)}}</b> を登録します 🐈‍⬛<br>あとは開いたページで<b>緑のボタン</b>を押すだけ！`;
-  msgEl.style.color = 'var(--gn)';
-  statusEl.style.display = '';
-  setTimeout(() => {{ msgEl.textContent = '最新の状態を確認中…'; location.reload(); }}, 150000);
+function delMine(id) {{
+  mine = mine.filter(v => String(v.id) !== String(id));
+  savMine(); renW(); refreshDeck(); updMineUI();
 }}
 
-function remQ(i) {{ pq.splice(i, 1); savQ(); }}
-function submitPending(i) {{
-  const q = pq[i];
-  if (!q) return;
-  pq.splice(i, 1); savQ();
-  openAddIssue(q.word, q.notes || '');
+function copyMine() {{
+  const lines = mine.map(v => `追加: ${{v.word}}${{v.notes ? ' — ' + v.notes : ''}}`);
+  Object.keys(edits).forEach(k => {{
+    const c = VOCAB.find(v => String(v.id) === String(k)), e = edits[k];
+    if (c) lines.push(`編集: ${{c.word}} → 意味: ${{e.meaning_ja}} / 例文: ${{e.example}} / メモ: ${{e.notes}}`);
+  }});
+  const txt = lines.join('\\n');
+  const done = () => toast('✓ コピーしました');
+  if (navigator.clipboard) navigator.clipboard.writeText(txt).then(done, () => fallbackCopy(txt, done));
+  else fallbackCopy(txt, done);
 }}
-function updQUI() {{
-  const n = pq.length;
-  document.getElementById('qcnt').textContent = n;
+function fallbackCopy(txt, done) {{
+  const ta = document.createElement('textarea');
+  ta.value = txt; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.select();
+  try {{ document.execCommand('copy'); done(); }} catch(e) {{ toast('コピーできませんでした', true); }}
+  document.body.removeChild(ta);
+}}
+
+function updMineUI() {{
+  const nEdit = Object.keys(edits).length, n = mine.length + nEdit;
   const b = document.getElementById('add-badge');
   b.textContent = n; b.style.display = n ? '' : 'none';
-  // The whole section only exists when something is waiting
   document.getElementById('pending-wrap').style.display = n ? '' : 'none';
-  document.getElementById('plist').innerHTML = pq.map((q, i) => `
+  if (!n) return;
+  document.getElementById('qcnt').textContent = n;
+  document.getElementById('plist').innerHTML = mine.map(q => `
     <div class="pi">
       <div>
         <div class="piw">${{esc(q.word)}}</div>
-        ${{q.notes ? `<div style="font-size:12px;color:var(--tx2)">${{esc(q.notes)}}</div>` : ''}}
+        ${{q.meaning_ja ? `<div style="font-size:12px;color:var(--tx2)">${{esc(q.meaning_ja)}}</div>` : ''}}
       </div>
-      <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
-        <button class="sbtn2" style="padding:6px 13px;font-size:12px" onclick="submitPending(${{i}})">登録</button>
-        <button class="pdel" onclick="remQ(${{i}})">✕</button>
-      </div>
-    </div>`).join('');
+      <button class="pdel" onclick="delMine('${{q.id}}')">✕</button>
+    </div>`).join('') +
+    (nEdit ? `<div class="pi"><div class="piw" style="font-weight:600;font-size:13px;color:var(--tx2)">✎ 編集した単語 ${{nEdit}}件</div></div>` : '');
 }}
 
 // ── STATS CHARTS ───────────────────────────────
 function renderTrend() {{
   const yg = {{}};
-  VOCAB.forEach(v => {{ const y = v.year || 2020; yg[y] = (yg[y] || 0) + 1; }});
+  ALL.forEach(v => {{ const y = v.year || 2020; yg[y] = (yg[y] || 0) + 1; }});
   const ys = ALL_YEARS.slice().reverse();
   const max = Math.max(...Object.values(yg), 1);
   const W = 60, PAD = 10, H = 160, BOTTOM = 30;
@@ -788,8 +883,8 @@ function renderTrend() {{
 
 function renderDonut() {{
   let n = 0, l = 0, m = 0;
-  VOCAB.forEach(c => {{ const x = gm(c); if (x==='new') n++; else if (x==='learning') l++; else m++; }});
-  const tot = VOCAB.length;
+  ALL.forEach(c => {{ const x = gm(c); if (x==='new') n++; else if (x==='learning') l++; else m++; }});
+  const tot = ALL.length;
   const segs = [
     {{v: m, color: 'var(--gn)', label: '習得済み'}},
     {{v: l, color: 'var(--yw)', label: '学習中'}},
@@ -815,7 +910,7 @@ function renderDonut() {{
 
 function renderYearTable() {{
   const rows = ALL_YEARS.map(y => {{
-    const ws = VOCAB.filter(v => (v.year || 2020) === y);
+    const ws = ALL.filter(v => (v.year || 2020) === y);
     const tot = ws.length;
     const m = ws.filter(v => gm(v) === 'mastered').length;
     const l = ws.filter(v => gm(v) === 'learning').length;
@@ -859,7 +954,7 @@ function sw(id, btn) {{
   try {{ localStorage.setItem('lastView', id); }} catch(e) {{}}
   if (id === 'vw')  renW();
   if (id === 'vr')  updSess();
-  if (id === 'va')  {{ updQUI(); }}
+  if (id === 'va')  {{ updMineUI(); }}
   if (id === 'vst') {{
     renderTrend(); renderDonut(); renderYearTable();
     ['all','new','learning','mastered'].forEach(k =>
@@ -876,8 +971,8 @@ function esc(s) {{ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').rep
 
 // ── INIT ───────────────────────────────────────
 function initApp() {{
-  loadSt();
-  buildDeck(); renW(); updQUI(); updSess();
+  loadSt(); loadMine();
+  buildDeck(); renW(); updMineUI(); updSess();
   setRF(st.revFilter || 'all');
   // Restore the last tab the user was on (defaults to Add)
   let last = 'va';
