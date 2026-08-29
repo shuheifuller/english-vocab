@@ -756,30 +756,58 @@ const POS_MAP = {{noun:'noun', verb:'verb', adjective:'adjective', adverb:'adver
 async function lookup(word) {{
   const q = word.trim(), multi = /\\s/.test(q);
   const out = {{english_def: '', example: '', pos: multi ? 'expression' : '', meaning_ja: ''}};
-  // Definition + part of speech (single words only — the API can't do phrases)
-  if (!multi) {{
+
+  // fetch with a timeout so one slow API can't stall the add
+  const fj = async (url, ms) => {{
+    const ac = new AbortController();
+    const t = setTimeout(() => ac.abort(), ms || 6000);
     try {{
-      const r = await fetch('https://api.dictionaryapi.dev/api/v2/entries/en/' + encodeURIComponent(q));
-      if (r.ok) {{
-        const j = await r.json();
-        const m0 = j[0] && j[0].meanings && j[0].meanings[0];
-        const d0 = m0 && m0.definitions && m0.definitions[0];
-        if (d0 && d0.definition) out.english_def = d0.definition;
-        if (d0 && d0.example)    out.example     = d0.example;
-        if (m0 && m0.partOfSpeech) out.pos = POS_MAP[m0.partOfSpeech] || '';
-      }}
-    }} catch(e) {{}}
+      const r = await fetch(url, {{signal: ac.signal}});
+      return r.ok ? await r.json() : null;
+    }} catch(e) {{ return null; }}
+    finally {{ clearTimeout(t); }}
+  }};
+
+  // English definition + part of speech (single words only — the API can't do phrases)
+  const pDict = multi ? Promise.resolve(null)
+    : fj('https://api.dictionaryapi.dev/api/v2/entries/en/' + encodeURIComponent(q));
+  // Japanese meaning — Google Translate (dt=bd adds dictionary senses)
+  const pGoog = fj('https://translate.googleapis.com/translate_a/single' +
+                   '?client=gtx&sl=en&tl=ja&dt=t&dt=bd&q=' + encodeURIComponent(q));
+  const [dj, gj] = await Promise.all([pDict, pGoog]);
+
+  if (dj) {{
+    const m0 = dj[0] && dj[0].meanings && dj[0].meanings[0];
+    const d0 = m0 && m0.definitions && m0.definitions[0];
+    if (d0 && d0.definition) out.english_def = d0.definition;
+    if (d0 && d0.example)    out.example     = d0.example;
+    if (m0 && m0.partOfSpeech) out.pos = POS_MAP[m0.partOfSpeech] || '';
   }}
-  // Japanese meaning
-  try {{
-    const r = await fetch('https://api.mymemory.translated.net/get?q=' +
-                          encodeURIComponent(q) + '&langpair=en|ja');
-    if (r.ok) {{
-      const j = await r.json();
-      const t = ((j && j.responseData && j.responseData.translatedText) || '').trim();
-      if (t && nrm(t) !== nrm(q)) out.meaning_ja = t;
-    }}
-  }} catch(e) {{}}
+
+  if (gj) {{
+    const main = (Array.isArray(gj[0]) ? gj[0] : [])
+      .map(seg => seg && seg[0] || '').join('').trim();
+    const senses = [];
+    if (main && nrm(main) !== nrm(q)) senses.push(main);
+    // gj[1] = dictionary entries: [pos, [terms...], ...]
+    (Array.isArray(gj[1]) ? gj[1] : []).forEach(entry => {{
+      (Array.isArray(entry && entry[1]) ? entry[1] : []).forEach(t => {{
+        if (t && !senses.includes(t) && senses.length < 4) senses.push(t);
+      }});
+    }});
+    if (senses.length) out.meaning_ja = senses.join('、');
+    // Google also knows the part of speech — use it if the dictionary didn't
+    const gpos = gj[1] && gj[1][0] && gj[1][0][0];
+    if (!out.pos && gpos) out.pos = POS_MAP[gpos] || '';
+  }}
+
+  // Fallback: MyMemory
+  if (!out.meaning_ja) {{
+    const j = await fj('https://api.mymemory.translated.net/get?q=' +
+                       encodeURIComponent(q) + '&langpair=en|ja');
+    const t = ((j && j.responseData && j.responseData.translatedText) || '').trim();
+    if (t && nrm(t) !== nrm(q)) out.meaning_ja = t;
+  }}
   return out;
 }}
 
