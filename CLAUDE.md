@@ -34,7 +34,8 @@ English Vocabulary List/
 │       ├── social.md
 │       └── similar-words.md
 ├── vocab_data.json         # Flat JSON for PWA (auto-generated from wiki)
-├── generate.py             # Generates vocab.html from vocab_data.json
+├── app_template.html       # PWA source (HTML/CSS/JS) — edit THIS for UI changes
+├── generate.py             # Injects vocab_data.json into app_template.html → vocab.html
 ├── sync.py                 # Processes queue, calls dictionary APIs, updates wiki
 ├── vocab.html              # PWA flashcard app (generated — do not edit directly)
 ├── manifest.json
@@ -120,6 +121,11 @@ Each entry:
 
 `mastery` values: `new` | `learning` | `mastered`
 
+The app does **not** read `mastery` for scheduling. Review progress is a spaced-repetition
+state kept on each device (localStorage `vsrs`: interval / ease / due day per word id), plus a
+daily activity log (`vlog`) that drives the streak and heatmap. Keep word `id`s stable — progress
+is keyed by them.
+
 ---
 
 ## wiki/index.md Format
@@ -190,7 +196,7 @@ Patterns, common mistakes, or interesting observations Claude has noticed.
 ## Important Rules
 
 1. **Never modify `raw/` files** — they are the immutable source of truth
-2. **Never edit `vocab.html` directly** — always edit data/scripts then regenerate
+2. **Never edit `vocab.html` directly** — UI changes go in `app_template.html`, data in `vocab_data.json`; then run `python3 generate.py`
 3. **Always append to `wiki/log.md`** — never rewrite history
 4. **Check for duplicates before adding** — the same word appears multiple times in the source data (e.g., "caveat" appears twice, "in light of" appears twice)
 5. **Preserve existing `mastery` values** when updating entries — don't reset progress

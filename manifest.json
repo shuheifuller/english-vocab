@@ -3,8 +3,8 @@
   "short_name": "単語帳",
   "start_url": "./vocab.html",
   "display": "standalone",
-  "background_color": "#0f0f1a",
-  "theme_color": "#0f0f1a",
+  "background_color": "#121118",
+  "theme_color": "#121118",
   "orientation": "portrait",
   "icons": [
     {
