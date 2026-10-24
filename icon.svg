@@ -1,19 +1,68 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024" fill="none">
-  <!-- Warm cream background -->
-  <rect width="1024" height="1024" fill="#f6f1e8"/>
+  <!-- Monochrome, Notion-style: white ground, bold ink outlines, flat shapes.
+       A black cat peeking over a flashcard. Source for icon-512/192 and apple-touch-icon. -->
+  <rect width="1024" height="1024" fill="#ffffff"/>
 
-  <!-- Minimal black cat peeking from the bottom -->
-  <g fill="#16161e">
-    <!-- Ears (sleek triangles) -->
-    <path d="M 302 580 L 272 306 L 480 452 Z"/>
-    <path d="M 722 580 L 752 306 L 544 452 Z"/>
-    <!-- Head (dome bleeding off the bottom edge) -->
-    <circle cx="512" cy="792" r="352"/>
+  <!-- Everything below is scaled 90% and re-centred for even margins -->
+  <g transform="translate(512 512) scale(0.9) translate(-512 -530)">
+
+  <!-- Sparkles (pop accent) -->
+  <g fill="#111111">
+    <path d="M852 186 Q858 238 910 244 Q858 250 852 302 Q846 250 794 244 Q846 238 852 186 Z"/>
+    <path d="M918 330 Q921 354 945 357 Q921 360 918 384 Q915 360 891 357 Q915 354 918 330 Z"/>
   </g>
 
-  <!-- Amber almond eyes -->
-  <g fill="#f2a63c">
-    <path d="M -62 0 Q 0 -46 62 0 Q 0 46 -62 0 Z" transform="translate(392 700) rotate(-6)"/>
-    <path d="M -62 0 Q 0 -46 62 0 Q 0 46 -62 0 Z" transform="translate(632 700) rotate(6)"/>
+  <!-- Whiskers (only the parts outside the head show) -->
+  <g stroke="#111111" stroke-width="16" stroke-linecap="round">
+    <path d="M330 440 L192 414"/><path d="M330 472 L186 476"/>
+    <path d="M694 440 L832 414"/><path d="M694 472 L838 476"/>
+  </g>
+
+  <!-- Cat head + ears -->
+  <g fill="#111111" stroke="#111111" stroke-width="22" stroke-linejoin="round">
+    <path d="M318 392 L300 150 L470 268 Z"/>
+    <path d="M706 392 L724 150 L554 268 Z"/>
+    <circle cx="512" cy="460" r="210"/>
+  </g>
+  <!-- Inner ears -->
+  <g fill="#ffffff">
+    <path d="M342 318 L332 222 L414 280 Z"/>
+    <path d="M682 318 L692 222 L610 280 Z"/>
+  </g>
+  <!-- Eyes: big round, looking up and to the right -->
+  <g fill="#ffffff">
+    <circle cx="434" cy="418" r="50"/>
+    <circle cx="590" cy="418" r="50"/>
+  </g>
+  <g fill="#111111">
+    <circle cx="448" cy="406" r="27"/>
+    <circle cx="604" cy="406" r="27"/>
+  </g>
+  <g fill="#ffffff">
+    <circle cx="457" cy="396" r="9"/>
+    <circle cx="613" cy="396" r="9"/>
+  </g>
+  <!-- Nose + ω mouth -->
+  <path d="M498 470 L526 470 L512 486 Z" fill="#ffffff" stroke="#ffffff" stroke-width="10" stroke-linejoin="round"/>
+  <path d="M484 496 Q498 512 512 496 Q526 512 540 496" stroke="#ffffff" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Flashcard with a hard offset shadow -->
+  <rect x="240" y="566" width="600" height="356" rx="56" fill="#111111"/>
+  <rect x="212" y="540" width="600" height="356" rx="56" fill="#ffffff" stroke="#111111" stroke-width="34"/>
+  <!-- "A" on the card -->
+  <g stroke="#111111" stroke-width="42" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M430 836 L512 640 L594 836"/>
+    <path d="M464 774 L560 774"/>
+  </g>
+
+  <!-- Paws gripping the card -->
+  <g fill="#111111">
+    <ellipse cx="404" cy="544" rx="64" ry="44"/>
+    <ellipse cx="620" cy="544" rx="64" ry="44"/>
+  </g>
+  <g stroke="#ffffff" stroke-width="9" stroke-linecap="round">
+    <path d="M386 552 L386 574"/><path d="M422 552 L422 574"/>
+    <path d="M602 552 L602 574"/><path d="M638 552 L638 574"/>
+  </g>
   </g>
 </svg>
