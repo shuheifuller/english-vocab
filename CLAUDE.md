@@ -123,7 +123,8 @@ Each entry:
 
 The app does **not** read `mastery` for scheduling. Review progress is a spaced-repetition
 state kept on each device (localStorage `vsrs`: interval / ease / due day per word id), plus a
-daily activity log (`vlog`) that drives the streak and heatmap. Keep word `id`s stable — progress
+daily activity log (`vlog`) that drives the streak and heatmap, and per-word answer counts
+(`vstat`: [correct, wrong]) that weight the random card order toward shaky words. Keep word `id`s stable — progress
 is keyed by them.
 
 ---

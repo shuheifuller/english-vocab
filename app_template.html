@@ -611,6 +611,36 @@ function schedule(id, g) {
   }
   srs[id] = s;
 }
+// ── ANSWER HISTORY & WEIGHTED RANDOM ORDER ─────────────
+// vstat[id] = [correct, wrong] — every graded answer, review and practice alike
+let vstat = LS.get('vstat', {});
+const saveStat = () => LS.set('vstat', vstat);
+function tally(id) {
+  const v = vstat[id], s = srs[id];
+  if (v) return {c: v[0], w: v[1]};
+  return {c: s ? s.r : 0, w: s ? s.l : 0};       // older progress: fall back to reps / lapses
+}
+function record(id, ok) {
+  const v = vstat[id] || (() => { const t = tally(id); return [t.c, t.w]; })();
+  v[ok ? 0 : 1]++; vstat[id] = v; saveStat();
+}
+// How urgently a card should come up: shakier cards get a higher weight.
+function weight(c) {
+  const s = srs[c.id], {c: ok, w: ng} = tally(c.id), t = today();
+  let wt = ({new: 1.4, learning: 2, mastered: 0.6})[gm(c)];
+  wt *= 0.5 + 2.5 * (ng + 1) / (ok + ng + 2);                      // error rate (smoothed)
+  if (s) {
+    wt *= 2.5 / s.e;                                                // hard words (low ease)
+    wt *= 1 + Math.min(1, Math.max(0, t - s.d) / 7);                // overdue
+    if (s.i === 0) wt *= 1.5;                                       // missed recently
+  }
+  return wt;
+}
+// Weighted shuffle: random every time, but heavier cards tend to come first
+function weightedOrder(cards) {
+  return cards.map(c => ({id: String(c.id), k: Math.pow(Math.random(), 1 / weight(c))}))
+    .sort((a, b) => b.k - a.k).map(x => x.id);
+}
 const ivLabel = d => d <= 0 ? 'すぐ' : d === 1 ? '明日' : d < 30 ? `${d}日後` : d < 365 ? `${Math.round(d / 30)}ヶ月後` : '1年後';
 
 // ── ACTIVITY LOG ─────────────────────────────────────────
@@ -635,13 +665,14 @@ function saveMine() { LS.set('vmine', mine); LS.set('vedits', edits); rebuild();
     const hit = byWord.get(nrm(m.word));
     if (!hit) return true;
     if (srs[m.id] && !srs[hit.id]) srs[hit.id] = srs[m.id];
-    delete srs[m.id]; changed = true; return false;
+    if (vstat[m.id] && !vstat[hit.id]) vstat[hit.id] = vstat[m.id];
+    delete srs[m.id]; delete vstat[m.id]; changed = true; return false;
   });
   for (const k of Object.keys(edits)) {
     const c = VOCAB.find(v => String(v.id) === String(k)), e = edits[k];
     if (c && (c.meaning_ja || '') === e.meaning_ja && (c.example || '') === e.example && (c.notes || '') === e.notes) { delete edits[k]; changed = true; }
   }
-  if (changed) { saveMine(); saveSrs(); } else rebuild();
+  if (changed) { saveMine(); saveSrs(); saveStat(); } else rebuild();
 })();
 
 // ── TODAY'S PLAN ─────────────────────────────────────────
@@ -787,18 +818,11 @@ $('#wotd-word').onclick = () => openWord($('#wotd').dataset.id);
 let S = null;
 function startToday() {
   const p = plan();
-  const due = p.due.map(c => String(c.id)), fr = p.fresh.map(c => String(c.id)), q = [];
-  let di = 0, fi = 0;
-  while (di < due.length || fi < fr.length) {            // mix in a new word after every 2 reviews
-    for (let k = 0; k < 2 && di < due.length; k++) q.push(due[di++]);
-    if (fi < fr.length) q.push(fr[fi++]);
-  }
-  openSession('today', q);
+  openSession('today', weightedOrder(p.due.concat(p.fresh)));
 }
 function startPractice(ids) {
-  const q = ids.map(String);
-  for (let i = q.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [q[i], q[j]] = [q[j], q[i]]; }
-  openSession('practice', q.slice(0, 30));
+  const cards = ids.map(id => BYID.get(String(id))).filter(Boolean);
+  openSession('practice', weightedOrder(cards).slice(0, 30));
 }
 function openSession(mode, q) {
   S = {mode, queue: q, total: q.length, done: 0, first: 0, firstOk: 0, tried: new Set(), revealed: false, busy: false};
@@ -852,6 +876,7 @@ function grade(g) {
   if (!S || !S.revealed || S.busy || !S.queue.length) return;
   const id = S.queue[0], l = L();
   if (!S.tried.has(id)) { S.tried.add(id); S.first++; if (g > 0) S.firstOk++; }
+  record(id, g > 0);
   l.r++;
   if (S.mode === 'today') { if (!srs[id]) l.n++; schedule(id, g); saveSrs(); }
   saveLog();
@@ -860,7 +885,7 @@ function grade(g) {
   flyOut(g, () => {
     S.busy = false;
     S.queue.shift();
-    if (g === 0) S.queue.splice(Math.min(3, S.queue.length), 0, id);   // see it again soon
+    if (g === 0) S.queue.splice(Math.min(2 + Math.floor(Math.random() * 4), S.queue.length), 0, id);   // see it again soon
     else S.done++;
     showCard();
   });
@@ -1037,6 +1062,8 @@ function openWord(id) {
   $('#wd-next').innerHTML = !s ? '🌱 まだ学習していません — 近いうちに出題されます'
     : s.d <= t ? '📅 今日の復習に入っています'
     : `📅 次の復習は <b>${ivLabel(s.d - t)}</b> ・ ${fmtDay(s.d)}`;
+  const tl = tally(c.id);
+  if (tl.c + tl.w) $('#wd-next').innerHTML += `<span style="margin-left:auto;white-space:nowrap">⭕ ${tl.c} ・ ❌ ${tl.w}</span>`;
   $('#wd-del').hidden = !wdId.startsWith('M');
   openSheet('#sh-word');
 }
@@ -1218,7 +1245,7 @@ $('#set-badge').onclick = async () => {
 };
 $('#reset').onclick = () => {
   if (!confirm('復習の記録と連続日数をすべてリセットしますか？\n（単語そのものは消えません）')) return;
-  srs = {}; vlog = {}; saveSrs(); saveLog(); refresh(); toast('リセットしました');
+  srs = {}; vlog = {}; vstat = {}; saveSrs(); saveLog(); saveStat(); refresh(); toast('リセットしました');
 };
 function updateBadge() {
   if (!('setAppBadge' in navigator)) return;
